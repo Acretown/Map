@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Basic Google Map Embed</title>
+  <style>
+    /* Responsive 16:9 container so the map scales nicely */
+    .map-wrap {
+      width: 100%;
+      max-width: 1000px;
+      margin: 24px auto;
+    }
+    .map-embed { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+    .hint { max-width: 1000px; margin: 0 auto; padding: 0 16px; color: #333; }
+    code { background:#f4f4f5; padding:2px 6px; border-radius:6px; }
+
+    /* InfoWindow styling */
+    .infowin { max-width: 280px; }
+    .infowin h3 { margin: 0 0 8px 0; font-size: 16px; }
+    .infowin img { display: block; width: 100%; height: auto; border-radius: 8px; margin: 8px 0; }
+    .infowin p { margin: 4px 0; }
+    .infowin .price { font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="map-wrap">
+    <div id="map" style="height: 600px; width: 100%;"></div>
+
+    <script async
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAICOnPq_rKDMXcA5WF5huQWRskOag-ENQ&callback=initMap">
+    </script>
+
+    <script>
+      function initMap() {
+        const map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 4,
+          center: { lat: 39.5, lng: -98.35 } // USA centroid-ish
+        });
+
+        // Multiple placeholder properties (replace with real values later)
+        const properties = [
+          {
+            title: "Property A – 10 Acres",
+            photo: "https://placehold.co/1600x900/jpg",
+            address: "1234 County Rd, Los Lunas, NM 87031",
+            acres: "10",
+            price: "$19,900",
+            lat: 34.8061,
+            lng: -106.7337
+          },
+          {
+            title: "Property B – 5 Acres",
+            photo: "https://placehold.co/1600x900/jpg",
+            address: "55 Mesa View, Belen, NM 87002",
+            acres: "5",
+            price: "$14,500",
+            lat: 34.6616,
+            lng: -106.7756
+          }
+        ];
+
+
+        const infoWindow = new google.maps.InfoWindow();
+        const bounds = new google.maps.LatLngBounds();
+
+        properties.forEach(p => {
+          const iconUrl = p.title.startsWith("Property A")
+            ? "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+            : "https://maps.google.com/mapfiles/ms/icons/red-dot.png";
+
+          const marker = new google.maps.Marker({
+            position: { lat: p.lat, lng: p.lng },
+            map,
+            title: p.title,
+            icon: iconUrl
+          });
+
+          marker.addListener("click", () => {
+            const container = document.createElement("div");
+            container.className = "infowin";
+            container.innerHTML = `
+              <h3>${p.title}</h3>
+              <img id="iw-img" src="${p.photo}" alt="Featured photo for ${p.title}">
+              <p>${p.address}</p>
+              <p>${p.acres} acres</p>
+              <p class="price">${p.price}</p>
+            `;
+
+            // Force InfoWindow to recalc size once the image loads (fixes images not showing)
+            const img = container.querySelector('#iw-img');
+            if (img) {
+              img.addEventListener('load', () => {
+                infoWindow.setContent(container);
+              });
+              img.addEventListener('error', () => {
+                // fallback placeholder if the provided url fails
+                img.src = 'https://placehold.co/800x500?text=No+Image';
+                infoWindow.setContent(container);
+              });
+            }
+
+            infoWindow.setContent(container);
+            infoWindow.open({ map, anchor: marker });
+          });
+
+          bounds.extend(marker.getPosition());
+        });
+
+        // Show the entire (continental) USA by default
+        const USA_BOUNDS = {
+          south: 24.7433195,  // roughly Key West latitude
+          west: -124.7844079, // roughly western WA/OR
+          north: 49.3457868,  // US/Canada border
+          east: -66.9513812   // Maine
+        };
+        map.fitBounds(USA_BOUNDS);
+      }
+    </script>
+  </div>
+
+  <p class="hint">
+    Tip: For an address instead of coordinates, change the iframe <code>src</code> to something like:<br>
+    <code>https://www.google.com/maps?q=100+Olivas+Rd,+Los+Lunas,+NM+87031&z=12&output=embed</code>
+  </p>
+</body>
+</html>
