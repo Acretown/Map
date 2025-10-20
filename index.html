@@ -3,25 +3,66 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Basic Google Map Embed</title>
+  <title>Properties Map</title>
   <style>
-    /* Responsive 16:9 container so the map scales nicely */
     .map-wrap {
       width: 100%;
       max-width: 1000px;
       margin: 24px auto;
     }
-    .map-embed { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
     .hint { max-width: 1000px; margin: 0 auto; padding: 0 16px; color: #333; }
     code { background:#f4f4f5; padding:2px 6px; border-radius:6px; }
 
-    /* InfoWindow styling */
     .infowin { max-width: 280px; }
     .infowin h3 { margin: 0 0 8px 0; font-size: 16px; }
     .infowin img { display: block; width: 100%; height: auto; border-radius: 8px; margin: 8px 0; }
     .infowin p { margin: 4px 0; }
     .infowin .price { font-weight: 600; }
+
+    /* Filter control styled like native Map/Satellite and attached to its right */
+    .filter-control { font-family: inherit; }
+    .filter-control .fc-wrap {
+      background: #fff;
+      border: 1px solid #dadce0;
+      border-radius: 2px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.24);
+      margin: 10px 0 0 0; /* default; we'll collapse gap next to map type control */
+      display: inline-flex;
+      align-items: center;
+      position: relative;
+      height: 40px; /* align height with native control */
+    }
+    /* Sit flush to the right of the native Map/Satellite control (no gap, shared border) */
+    .gm-style .gm-style-mtc + .filter-control .fc-wrap { margin-left: -1px; border-left: none; border-radius: 0 2px 2px 0; }
+
+    .filter-control button {
+      background: transparent;
+      border: 0;
+      padding: 0 14px;
+      height: 100%;
+      cursor: pointer;
+      font-weight: 600;
+      line-height: 40px;
+      font-size: 16px;
+    }
+    .filter-control button:hover { background: #f1f3f4; }
+
+    .filter-control .menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      margin-top: 6px;
+      background: #fff;
+      border: 1px solid #dadce0;
+      border-radius: 2px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.24);
+      padding: 8px 10px;
+      display: none;
+      z-index: 5;
+      min-width: 180px;
+    }
+    .filter-control .menu label { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; }
   </style>
 </head>
 <body>
@@ -33,69 +74,150 @@
     </script>
 
     <script>
-      function initMap() {
+      async function initMap() {
         const map = new google.maps.Map(document.getElementById("map"), {
-          zoom: 4,
-          center: { lat: 39.5, lng: -98.35 } // USA centroid-ish
+          zoom: 3,
+          center: { lat: 39.5, lng: -98.35 },
+          streetViewControl: false
+        });
+        // Continental US bounds as a LatLngBounds instance (more reliable)
+        const USA_BOUNDS = new google.maps.LatLngBounds(
+          new google.maps.LatLng(24.7433195, -124.7844079),
+          new google.maps.LatLng(49.3457868,  -66.9513812)
+        );
+
+        // Add some padding around US so popups near the borders aren't clipped
+        const VIEW_BOUNDS = new google.maps.LatLngBounds(
+          new google.maps.LatLng(5,  -140),   // more room south & west
+          new google.maps.LatLng(72,  -50)    // much more room north & east
+        );
+
+        // Keep users roughly within North America but allow more zoom-out
+        map.setOptions({
+          restriction: { latLngBounds: VIEW_BOUNDS, strictBounds: false },
+          minZoom: 2
+        });
+        map.setOptions({
+          mapTypeControl: true,
+          mapTypeControlOptions: {
+            style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+            position: google.maps.ControlPosition.TOP_LEFT
+          }
         });
 
-        // Multiple placeholder properties (replace with real values later)
-        const properties = [
-          {
-            title: "Property A – 10 Acres",
-            photo: "https://placehold.co/1600x900/jpg",
-            address: "1234 County Rd, Los Lunas, NM 87031",
-            acres: "10",
-            price: "$19,900",
-            lat: 34.8061,
-            lng: -106.7337
-          },
-          {
-            title: "Property B – 5 Acres",
-            photo: "https://placehold.co/1600x900/jpg",
-            address: "55 Mesa View, Belen, NM 87002",
-            acres: "5",
-            price: "$14,500",
-            lat: 34.6616,
-            lng: -106.7756
-          }
-        ];
+        const sheetId = "1UU6QeID1wbqugVXkJJM6DWZpHhzqKUuCYarKB-SWK0I";
+        const gid = "283380080";
+        const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&gid=${gid}`;
 
+        const response = await fetch(url);
+        const text = await response.text();
+        const json = JSON.parse(text.substring(47, text.length - 2));
+        const rows = json.table.rows;
 
         const infoWindow = new google.maps.InfoWindow();
         const bounds = new google.maps.LatLngBounds();
 
-        properties.forEach(p => {
-          const iconUrl = p.title.startsWith("Property A")
-            ? "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-            : "https://maps.google.com/mapfiles/ms/icons/red-dot.png";
+        const markers = [];
+
+        // Create a Filter control and place it immediately to the right of Map/Satellite (TOP_LEFT)
+        const filterDiv = document.createElement('div');
+        filterDiv.className = 'filter-control';
+        const fcWrap = document.createElement('div');
+        fcWrap.className = 'fc-wrap';
+        const fcBtn = document.createElement('button');
+        fcBtn.type = 'button';
+        fcBtn.textContent = 'Filter';
+        fcWrap.appendChild(fcBtn);
+        const fcMenu = document.createElement('div');
+        fcMenu.className = 'menu';
+        fcMenu.innerHTML = `
+          <label><input type="checkbox" id="fc-hide-available"> Hide Available</label>
+          <label><input type="checkbox" id="fc-hide-sold"> Hide Sold</label>
+        `;
+        fcWrap.appendChild(fcMenu);
+        filterDiv.appendChild(fcWrap);
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(filterDiv);
+
+        // Toggle menu open/close; keep open when clicking inside
+        fcBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          fcMenu.style.display = (fcMenu.style.display === 'block') ? 'none' : 'block';
+        });
+        document.addEventListener('click', (e) => {
+          if (!fcWrap.contains(e.target)) fcMenu.style.display = 'none';
+        });
+
+        function applyFilters() {
+          const hideAvail = document.getElementById('fc-hide-available')?.checked;
+          const hideSold  = document.getElementById('fc-hide-sold')?.checked;
+          markers.forEach(m => {
+            const hide = (m.isSold && hideSold) || (!m.isSold && hideAvail);
+            m.setVisible(!hide);
+          });
+        }
+        fcMenu.addEventListener('change', applyFilters);
+
+
+        rows.forEach(r => {
+          const status = (r.c[0]?.v || "").trim();
+          const title = r.c[1]?.v || "";
+          const price = r.c[2]?.v || "";
+          const address = r.c[3]?.v || "";
+          const acres = r.c[4]?.v || "";
+          const lat = parseFloat(r.c[5]?.v) || 0;
+          const lng = parseFloat(r.c[6]?.v) || 0;
+          const link = r.c[7]?.v || "#";
+          const photo = r.c[8]?.v || "https://placehold.co/800x500?text=No+Image";
+
+          if (!lat || !lng) return;
+
+          const normalizedStatus = (status || "").toLowerCase().trim();
+          const validStatuses = ["full marketing", "sale pending", "basic marketing", "sold"];
+          const matchedStatus = validStatuses.find(s => normalizedStatus.startsWith(s));
+          if (!matchedStatus) return;
+
+          // Clean display name
+          let displayStatus = status;
+          if (/^(basic marketing|full marketing)$/i.test(status)) {
+            displayStatus = "Available";
+          } else if (/^sale pending/i.test(status)) {
+            displayStatus = "Sale Pending";
+          }
+
+          const isSold = normalizedStatus === 'sold';
+
+          // Color: SOLD = rojo, el resto = azul
+          const iconUrl = normalizedStatus === "sold"
+            ? "https://maps.google.com/mapfiles/ms/icons/red-dot.png"
+            : "https://maps.google.com/mapfiles/ms/icons/blue-dot.png";
 
           const marker = new google.maps.Marker({
-            position: { lat: p.lat, lng: p.lng },
+            position: { lat, lng },
             map,
-            title: p.title,
-            icon: iconUrl
+            title,
+            icon: iconUrl,
+            zIndex: normalizedStatus === "sold" ? 1 : 2
           });
+          marker.isSold = isSold; // for filtering
+          markers.push(marker);
 
           marker.addListener("click", () => {
             const container = document.createElement("div");
             container.className = "infowin";
             container.innerHTML = `
-              <h3>${p.title}</h3>
-              <img id="iw-img" src="${p.photo}" alt="Featured photo for ${p.title}">
-              <p>${p.address}</p>
-              <p>${p.acres} acres</p>
-              <p class="price">${p.price}</p>
+              <h3>${title}</h3>
+              <img id="iw-img" src="${photo}" alt="Featured photo for ${title}">
+              <p><strong>Status:</strong> ${displayStatus}</p>
+              <p><strong>Address:</strong> ${address}</p>
+              <p><strong>Size:</strong> ${acres} acres</p>
+              <p><strong>Price:</strong> ${formatPrice(price)}</p>
+              <p><a href="${link}" target="_blank">View Property</a></p>
             `;
 
-            // Force InfoWindow to recalc size once the image loads (fixes images not showing)
             const img = container.querySelector('#iw-img');
             if (img) {
-              img.addEventListener('load', () => {
-                infoWindow.setContent(container);
-              });
+              img.addEventListener('load', () => infoWindow.setContent(container));
               img.addEventListener('error', () => {
-                // fallback placeholder if the provided url fails
                 img.src = 'https://placehold.co/800x500?text=No+Image';
                 infoWindow.setContent(container);
               });
@@ -103,26 +225,64 @@
 
             infoWindow.setContent(container);
             infoWindow.open({ map, anchor: marker });
+            // Ensure the InfoWindow is fully visible only if it's actually offscreen
+            google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
+              const mapEl = document.getElementById('map');
+              const iwEl = document.querySelector('.gm-style-iw');
+              if (!mapEl || !iwEl) return;
+
+              setTimeout(() => {
+                const pad = 12;
+                const mr = mapEl.getBoundingClientRect();
+                const iwFrame = iwEl.closest('div[role="dialog"]') || iwEl;
+                const ir = iwFrame.getBoundingClientRect();
+
+                let dx = 0, dy = 0;
+
+                // Only pan if the InfoWindow is actually cropped out of view
+                if (ir.top < mr.top + pad) dy = (mr.top + pad) - ir.top; // offscreen above
+                else if (ir.bottom > mr.bottom - pad) dy = (mr.bottom - pad) - ir.bottom; // offscreen below
+
+                if (ir.left < mr.left + pad) dx = (mr.left + pad) - ir.left; // offscreen left
+                else if (ir.right > mr.right - pad) dx = (mr.right - pad) - ir.right; // offscreen right
+
+                if (dx !== 0 || dy !== 0) {
+                  map.panBy(dx, dy);
+                }
+              }, 250);
+            });
           });
 
           bounds.extend(marker.getPosition());
         });
 
-        // Show the entire (continental) USA by default
-        const USA_BOUNDS = {
-          south: 24.7433195,  // roughly Key West latitude
-          west: -124.7844079, // roughly western WA/OR
-          north: 49.3457868,  // US/Canada border
-          east: -66.9513812   // Maine
-        };
-        map.fitBounds(USA_BOUNDS);
+        if (bounds.isEmpty()) {
+          // No markers → default to US frame
+          map.fitBounds(USA_BOUNDS);
+          map.setZoom(Math.max(map.getZoom(), 4));
+        } else {
+          // Fit to markers, but never beyond US/world
+          map.fitBounds(bounds);
+          google.maps.event.addListenerOnce(map, 'idle', () => {
+            if (map.getZoom() < 3) map.setZoom(4);
+            const center = map.getCenter();
+            if (!VIEW_BOUNDS.contains(center)) {
+              map.fitBounds(USA_BOUNDS); // start view is still the US frame
+              map.setZoom(Math.max(map.getZoom(), 4));
+            }
+          });
+        }
+        if (typeof applyFilters === 'function') applyFilters();
+      }
+
+      function formatPrice(value) {
+        if (!value) return '$0';
+        // Remove any existing non-numeric characters except '.'
+        const num = parseFloat(String(value).replace(/[^0-9.]/g, ''));
+        if (isNaN(num)) return value;
+        return num.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 });
       }
     </script>
   </div>
-
-  <p class="hint">
-    Tip: instead of coordinates, change the iframe <code>src</code> to something like:<br>
-    <code>https://www.google.com/maps?q=100+Olivas+Rd,+Los+Lunas,+NM+87031&z=12&output=embed</code>
-  </p>
 </body>
 </html>
