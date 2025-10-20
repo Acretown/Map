@@ -85,11 +85,19 @@
 
     <script>
       async function initMap() {
+        const US_CENTER = { lat: 38.5, lng: -96.5 };
+        const US_ZOOM = 4.0;
+
         const map = new google.maps.Map(document.getElementById("map"), {
-          zoom: 3,
-          center: { lat: 39.5, lng: -98.35 },
+          zoom: US_ZOOM,
+          center: US_CENTER,
           streetViewControl: false
         });
+
+        const recenterOnUS = () => {
+          map.setCenter(US_CENTER);
+          if (map.getZoom() !== US_ZOOM) map.setZoom(US_ZOOM);
+        };
         // Continental US bounds as a LatLngBounds instance (more reliable)
         const USA_BOUNDS = new google.maps.LatLngBounds(
           new google.maps.LatLng(24.7433195, -124.7844079),
@@ -266,22 +274,15 @@
           bounds.extend(marker.getPosition());
         });
 
-        if (bounds.isEmpty()) {
-          // No markers → default to US frame
-          map.fitBounds(USA_BOUNDS);
-          map.setZoom(Math.max(map.getZoom(), 4));
-        } else {
-          // Fit to markers, but never beyond US/world
-          map.fitBounds(bounds);
-          google.maps.event.addListenerOnce(map, 'idle', () => {
-            if (map.getZoom() < 3) map.setZoom(4);
-            const center = map.getCenter();
-            if (!VIEW_BOUNDS.contains(center)) {
-              map.fitBounds(USA_BOUNDS); // start view is still the US frame
-              map.setZoom(Math.max(map.getZoom(), 4));
-            }
-          });
-        }
+        google.maps.event.addListenerOnce(map, 'idle', () => {
+          const center = map.getCenter();
+          if (!VIEW_BOUNDS.contains(center)) {
+            map.setCenter(US_CENTER); // keep within permitted viewport
+          }
+          recenterOnUS();
+        });
+
+        map.fitBounds(USA_BOUNDS);
         if (typeof applyFilters === 'function') applyFilters();
       }
 
