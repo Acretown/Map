@@ -63,6 +63,16 @@
       min-width: 180px;
     }
     .filter-control .menu label { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; }
+
+    /* Prevent scrollbars when embedded in an iframe */
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    .map-wrap, #map, .gm-style {
+      overflow: hidden !important;
+    }
   </style>
 </head>
 <body>
