@@ -196,10 +196,16 @@
 
           const isSold = normalizedStatus === 'sold';
 
-          // Color: SOLD = rojo, el resto = azul
-          const iconUrl = normalizedStatus === "sold"
-            ? "https://maps.google.com/mapfiles/ms/icons/red-dot.png"
-            : "https://maps.google.com/mapfiles/ms/icons/blue-dot.png";
+          // Marker colors: sold = red, pending = yellow, available = green
+          const iconUrl = (() => {
+            if (/^sold/.test(normalizedStatus)) {
+              return "https://maps.google.com/mapfiles/ms/icons/red-dot.png";
+            }
+            if (/^sale pending/.test(normalizedStatus)) {
+              return "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png";
+            }
+            return "https://maps.google.com/mapfiles/ms/icons/green-dot.png";
+          })();
 
           const marker = new google.maps.Marker({
             position: { lat, lng },
