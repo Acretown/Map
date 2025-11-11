@@ -63,6 +63,72 @@
       min-width: 180px;
     }
     .filter-control .menu label { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; }
+    .filter-control .menu .price-filter {
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      text-align: center;
+    }
+    .price-filter-title {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .04em;
+      margin: 0 0 8px;
+    }
+    .price-filter-slider {
+      position: relative;
+      height: 24px;
+      margin: 24px auto 6px;
+      width: calc(100% - 20px);
+    }
+    .price-filter-slider input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      position: absolute;
+      left: 0;
+      top: 0;
+      background: none;
+      pointer-events: none;
+      margin: 0;
+    }
+    .price-filter-slider input[type="range"]::-webkit-slider-runnable-track {
+      height: 4px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, #4caf50, #4caf50);
+      pointer-events: none;
+    }
+    .price-filter-slider input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid #4caf50;
+      pointer-events: auto;
+      margin-top: -6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .price-filter-slider input[type="range"]::-moz-range-track {
+      height: 4px;
+      border-radius: 2px;
+      background: #4caf50;
+    }
+    .price-filter-slider input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid #4caf50;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+      pointer-events: auto;
+    }
+    .price-filter-values {
+      font-size: 13px;
+      font-weight: 500;
+      text-align: center;
+    }
 
     /* Prevent scrollbars when embedded in an iframe */
     html, body {
@@ -115,19 +181,31 @@
           }
         });
 
-        const sheetId = "1UU6QeID1wbqugVXkJJM6DWZpHhzqKUuCYarKB-SWK0I";
-        const gid = "283380080";
-        const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&gid=${gid}`;
+        const sheetsToLoad = [
+          { sheetId: "1W9UxPM6gd_Fr-CW_x1DU8-d3JusMcFVK_HD-QiXrHpM", gid: "0" },
+          { sheetId: "1UU6QeID1wbqugVXkJJM6DWZpHhzqKUuCYarKB-SWK0I", gid: "727280565" }
+        ];
 
-        const response = await fetch(url);
-        const text = await response.text();
-        const json = JSON.parse(text.substring(47, text.length - 2));
-        const rows = json.table.rows;
+        async function fetchSheetRows({ sheetId, gid }) {
+          const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&gid=${gid}`;
+          const response = await fetch(url);
+          const text = await response.text();
+          const json = JSON.parse(text.substring(47, text.length - 2));
+          return json.table.rows || [];
+        }
+
+        const rowsArray = await Promise.all(sheetsToLoad.map(fetchSheetRows));
+        const rows = rowsArray.flat();
 
         const infoWindow = new google.maps.InfoWindow();
         const bounds = new google.maps.LatLngBounds();
 
         const markers = [];
+        let highestPrice = 0;
+        let sliderReady = false;
+        const PRICE_CAP = 100000;
+        let sliderMaxValue = 0;
+        let sliderHasOverflowTier = false;
 
         // Create a Filter control and place it immediately to the right of Map/Satellite (TOP_LEFT)
         const filterDiv = document.createElement('div');
@@ -141,12 +219,56 @@
         const fcMenu = document.createElement('div');
         fcMenu.className = 'menu';
         fcMenu.innerHTML = `
-          <label><input type="checkbox" id="fc-hide-available"> Hide Available</label>
+          <div class="price-filter">
+            <p class="price-filter-title">FILTER BY PRICE</p>
+            <div class="price-filter-slider">
+              <input type="range" id="price-min" min="0" max="0" value="0" step="1">
+              <input type="range" id="price-max" min="0" max="0" value="0" step="1">
+            </div>
+            <div class="price-filter-values" id="price-values">Price: $0 - $0</div>
+          </div>
           <label><input type="checkbox" id="fc-hide-sold"> Hide Sold</label>
+          <label><input type="checkbox" id="fc-hide-available"> Hide Available</label>
         `;
         fcWrap.appendChild(fcMenu);
         filterDiv.appendChild(fcWrap);
         map.controls[google.maps.ControlPosition.TOP_LEFT].push(filterDiv);
+
+        const priceMinInput = fcMenu.querySelector('#price-min');
+        const priceMaxInput = fcMenu.querySelector('#price-max');
+        const priceValueEl = fcMenu.querySelector('#price-values');
+
+        const updatePriceDisplay = () => {
+          if (!priceMinInput || !priceMaxInput || !priceValueEl) return;
+          const minVal = Math.min(Number(priceMinInput.value), Number(priceMaxInput.value));
+          const maxVal = Math.max(Number(priceMinInput.value), Number(priceMaxInput.value));
+          priceMinInput.value = String(minVal);
+          priceMaxInput.value = String(maxVal);
+          const upperLabel = (sliderHasOverflowTier && maxVal >= sliderMaxValue)
+            ? `${formatPrice(sliderMaxValue)}+`
+            : formatPrice(maxVal);
+          priceValueEl.textContent = `Price: ${formatPrice(minVal)} - ${upperLabel}`;
+        };
+
+        const handlePriceInput = (inputEl) => {
+          if (!priceMinInput || !priceMaxInput) return;
+          let minVal = Number(priceMinInput.value);
+          let maxVal = Number(priceMaxInput.value);
+          if (minVal > maxVal) {
+            if (inputEl === priceMinInput) {
+              priceMaxInput.value = String(minVal);
+              maxVal = minVal;
+            } else {
+              priceMinInput.value = String(maxVal);
+              minVal = maxVal;
+            }
+          }
+          updatePriceDisplay();
+          if (sliderReady) applyFilters();
+        };
+
+        priceMinInput?.addEventListener('input', () => handlePriceInput(priceMinInput));
+        priceMaxInput?.addEventListener('input', () => handlePriceInput(priceMaxInput));
 
         // Toggle menu open/close; keep open when clicking inside
         fcBtn.addEventListener('click', (e) => {
@@ -157,11 +279,26 @@
           if (!fcWrap.contains(e.target)) fcMenu.style.display = 'none';
         });
 
+        const getPriceBounds = () => {
+          if (!sliderReady || !priceMinInput || !priceMaxInput) {
+            return { min: 0, max: Number.POSITIVE_INFINITY };
+          }
+          const low = Math.min(Number(priceMinInput.value), Number(priceMaxInput.value));
+          let high = Math.max(Number(priceMinInput.value), Number(priceMaxInput.value));
+          if (sliderHasOverflowTier && high >= sliderMaxValue) {
+            high = Number.POSITIVE_INFINITY;
+          }
+          return { min: low, max: high };
+        };
+
         function applyFilters() {
           const hideAvail = document.getElementById('fc-hide-available')?.checked;
           const hideSold  = document.getElementById('fc-hide-sold')?.checked;
+          const { min: minPrice, max: maxPrice } = getPriceBounds();
           markers.forEach(m => {
-            const hide = (m.isSold && hideSold) || (!m.isSold && hideAvail);
+            const priceValue = typeof m.priceValue === 'number' ? m.priceValue : 0;
+            const hideByPrice = priceValue < minPrice || priceValue > maxPrice;
+            const hide = (m.isSold && hideSold) || (!m.isSold && hideAvail) || hideByPrice;
             m.setVisible(!hide);
           });
         }
@@ -207,6 +344,8 @@
             return "https://maps.google.com/mapfiles/ms/icons/green-dot.png";
           })();
 
+          const priceValue = parsePrice(price);
+
           const marker = new google.maps.Marker({
             position: { lat, lng },
             map,
@@ -215,7 +354,10 @@
             zIndex: normalizedStatus === "sold" ? 1 : 2
           });
           marker.isSold = isSold; // for filtering
+          marker.priceValue = priceValue;
           markers.push(marker);
+
+          highestPrice = Math.max(highestPrice, priceValue);
 
           marker.addListener("click", () => {
             const container = document.createElement("div");
@@ -272,6 +414,17 @@
           bounds.extend(marker.getPosition());
         });
 
+        if (priceMinInput && priceMaxInput) {
+          sliderHasOverflowTier = highestPrice > PRICE_CAP;
+          sliderMaxValue = sliderHasOverflowTier ? PRICE_CAP : (highestPrice || PRICE_CAP);
+          priceMinInput.max = sliderMaxValue;
+          priceMaxInput.max = sliderMaxValue;
+          priceMinInput.value = 0;
+          priceMaxInput.value = sliderMaxValue;
+          sliderReady = markers.length > 0 && sliderMaxValue > 0;
+          updatePriceDisplay();
+        }
+
         if (bounds.isEmpty()) {
           // No markers → default to US frame
           map.fitBounds(USA_BOUNDS);
@@ -297,6 +450,17 @@
         const num = parseFloat(String(value).replace(/[^0-9.]/g, ''));
         if (isNaN(num)) return value;
         return num.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 });
+      }
+
+      function parsePrice(value) {
+        if (value === undefined || value === null) return 0;
+        const matches = String(value).match(/[0-9.,]+/g);
+        if (!matches) return 0;
+        return matches.reduce((max, chunk) => {
+          const numeric = parseFloat(chunk.replace(/,/g, ''));
+          if (isNaN(numeric)) return max;
+          return Math.max(max, numeric);
+        }, 0);
       }
     </script>
   </div>
