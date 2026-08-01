@@ -39,7 +39,7 @@
     button, label, select { -webkit-tap-highlight-color: transparent; }
 
     .app {
-      width: min(1440px, 100%);
+      width: min(1720px, 100%);
       margin: 0 auto;
       padding: 22px;
     }
@@ -241,7 +241,7 @@
 
     .map-shell {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 370px;
+      grid-template-columns: minmax(0, 1fr) 410px;
       height: clamp(580px, 73vh, 760px);
       overflow: hidden;
       border: 1px solid var(--line);
@@ -368,11 +368,34 @@
       transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
     }
 
-    .property-card:hover,
-    .property-card.is-active {
+    .property-card:hover {
       border-color: #9bc3aa;
       box-shadow: 0 8px 20px rgba(30, 109, 69, 0.11);
       transform: translateY(-1px);
+    }
+
+    .property-card.is-active {
+      border-color: var(--brand);
+      background: #f1f8f4;
+      box-shadow: 0 0 0 2px rgba(30, 109, 69, 0.12), 0 10px 24px rgba(30, 109, 69, 0.16);
+    }
+
+    .property-card.is-active .property-card-main { background: #f1f8f4; }
+
+    .property-card.is-highlighting {
+      animation: property-card-highlight 760ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes property-card-highlight {
+      0% {
+        box-shadow: 0 0 0 0 rgba(30, 109, 69, 0.38), 0 10px 24px rgba(30, 109, 69, 0.16);
+      }
+      70% {
+        box-shadow: 0 0 0 9px rgba(30, 109, 69, 0), 0 10px 24px rgba(30, 109, 69, 0.16);
+      }
+      100% {
+        box-shadow: 0 0 0 2px rgba(30, 109, 69, 0.12), 0 10px 24px rgba(30, 109, 69, 0.16);
+      }
     }
 
     .property-card-main {
@@ -386,6 +409,7 @@
       padding: 0;
       text-align: left;
       cursor: pointer;
+      transition: background-color 180ms ease;
     }
 
     .property-thumb {
@@ -488,77 +512,82 @@
       line-height: 1.5;
     }
 
-    .infowin {
-      width: min(310px, 72vw);
-      color: var(--ink);
-      font: 14px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    .infowin-photo {
-      width: 100%;
-      height: 145px;
-      object-fit: cover;
-      border-radius: 10px;
-      background: #e4ece7;
-    }
-
-    .infowin h3 {
-      margin: 10px 0 6px;
-      font-size: 15px;
-      line-height: 1.35;
-    }
-
-    .infowin p {
-      margin: 4px 0;
-      color: #4f5f56;
-    }
-
-    .infowin strong { color: var(--ink); }
-
-    .infowin-link {
-      display: inline-flex;
-      align-items: center;
-      min-height: 38px;
-      margin-top: 10px;
-      border-radius: 9px;
-      background: var(--brand);
-      color: #fff;
-      padding: 8px 12px;
-      font-weight: 850;
-      text-decoration: none;
-    }
-
-    .infowin-link:hover { background: var(--brand-dark); }
-
-    .gm-style .gm-style-iw-c { border-radius: 14px; }
-
     .mobile-property-sheet {
       position: absolute;
-      z-index: 5;
+      z-index: 10;
       right: 12px;
       bottom: 12px;
       left: 12px;
-      max-height: min(47%, 320px);
+      max-height: min(38%, 240px);
       overflow: auto;
       border: 1px solid rgba(219, 228, 222, 0.96);
       border-radius: 18px;
       background: rgba(255, 255, 255, 0.98);
-      padding: 14px 48px 14px 14px;
+      padding: 12px 48px 12px 12px;
       box-shadow: 0 18px 45px rgba(20, 53, 35, 0.24);
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
     }
 
-    .mobile-property-sheet .infowin { width: auto; }
-
-    .mobile-property-sheet .infowin-photo {
-      float: left;
-      width: 104px;
-      height: 84px;
-      margin: 0 12px 8px 0;
+    .mobile-property-preview {
+      display: grid;
+      grid-template-columns: 104px minmax(0, 1fr);
+      gap: 12px;
+      color: var(--ink);
     }
 
-    .mobile-property-sheet .infowin h3 { margin-top: 0; }
+    .mobile-property-photo {
+      position: relative;
+      min-height: 96px;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #dfe9e2;
+    }
+
+    .mobile-property-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .mobile-property-body { min-width: 0; }
+
+    .mobile-property-preview h3 {
+      display: -webkit-box;
+      overflow: hidden;
+      margin: 5px 0 4px;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+    .mobile-property-address {
+      display: -webkit-box;
+      overflow: hidden;
+      margin: 0;
+      color: var(--muted);
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .mobile-property-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      margin-top: 8px;
+      border-radius: 9px;
+      background: var(--brand);
+      color: #fff;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 850;
+      text-decoration: none;
+    }
+
+    .mobile-property-link:hover { background: var(--brand-dark); }
 
     .mobile-property-close {
       position: absolute;
@@ -592,7 +621,7 @@
 
       .app {
         display: grid;
-        width: min(1440px, 100%);
+        width: min(1720px, 100%);
         height: 100vh;
         height: 100dvh;
         grid-template-rows: auto auto minmax(0, 1fr);
@@ -631,7 +660,6 @@
       .app[data-mobile-view="map"] .results-panel { display: none; }
       .app[data-mobile-view="list"] .map-panel { display: none; }
       .results-list { padding: 12px; }
-      .gm-style .gm-style-iw-a { display: none !important; }
     }
 
     @media (max-width: 480px) {
@@ -647,9 +675,10 @@
         right: 8px;
         bottom: max(8px, env(safe-area-inset-bottom));
         left: 8px;
-        max-height: min(50%, 290px);
+        max-height: min(38%, 220px);
       }
-      .mobile-property-sheet .infowin-photo { display: none; }
+      .mobile-property-preview { grid-template-columns: minmax(0, 1fr); }
+      .mobile-property-photo { display: none; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -812,7 +841,6 @@
       const mobilePropertyClose = document.getElementById("mobile-property-close");
 
       let map;
-      let infoWindow;
       let MarkerClass;
       let PinClass;
       let clusterer;
@@ -826,6 +854,7 @@
       let savedMobileCamera = null;
       let viewportListTimer = 0;
       let mapWakeTimer = 0;
+      let propertyHighlightTimer = 0;
       const CAMERA_FRAME_INTERVAL = 1000 / 60;
 
       function decodeEntities(value) {
@@ -1037,50 +1066,57 @@
         return wrapper;
       }
 
-      function buildInfoWindow(property) {
+      function buildMobilePropertyPreview(property) {
         const container = document.createElement("div");
-        container.className = "infowin";
+        container.className = "mobile-property-preview";
 
         if (property.photo) {
-          const image = document.createElement("img");
-          image.className = "infowin-photo";
-          image.src = property.photo;
-          image.alt = `Featured view of ${property.title}`;
-          image.addEventListener("error", () => image.remove(), { once: true });
-          container.appendChild(image);
+          container.appendChild(makePropertyImage(property, "mobile-property-photo"));
         }
 
-        container.appendChild(createTextElement("h3", "", property.title));
-        const status = document.createElement("p");
-        const statusLabel = createTextElement("strong", "", "Status: ");
-        status.append(statusLabel, document.createTextNode(property.statusLabel));
-        container.appendChild(status);
-
-        const address = document.createElement("p");
-        address.append(createTextElement("strong", "", "Address: "), document.createTextNode(property.address));
-        container.appendChild(address);
-
-        const size = document.createElement("p");
-        size.append(createTextElement("strong", "", "Size: "), document.createTextNode(`${property.acresLabel} acres`));
-        container.appendChild(size);
-
-        const price = document.createElement("p");
-        price.append(createTextElement("strong", "", "Price: "), document.createTextNode(property.priceLabel || formatPrice(property.price)));
-        container.appendChild(price);
+        const body = document.createElement("div");
+        body.className = "mobile-property-body";
+        const topLine = document.createElement("div");
+        topLine.className = "card-topline";
+        topLine.append(createStatusBadge(property), createTextElement("span", "card-price", property.priceLabel || formatPrice(property.price)));
+        body.append(topLine, createTextElement("h3", "", property.title));
+        body.appendChild(createTextElement("p", "mobile-property-address", property.address));
 
         if (property.link) {
-          const link = createTextElement("a", "infowin-link", "View property");
+          const link = createTextElement("a", "mobile-property-link", "View property ↗");
           link.href = property.link;
           link.target = "_blank";
           link.rel = "noopener noreferrer";
-          container.appendChild(link);
+          body.appendChild(link);
         }
 
+        container.appendChild(body);
         return container;
       }
 
       function clearActiveCard() {
-        resultsList.querySelectorAll(".property-card.is-active").forEach(card => card.classList.remove("is-active"));
+        window.clearTimeout(propertyHighlightTimer);
+        propertyHighlightTimer = 0;
+        resultsList.querySelectorAll(".property-card.is-active, .property-card.is-highlighting").forEach(card => {
+          card.classList.remove("is-active", "is-highlighting");
+          card.querySelector(".property-card-main")?.setAttribute("aria-pressed", "false");
+        });
+      }
+
+      function highlightPropertyCard(property, { scroll = true } = {}) {
+        clearActiveCard();
+        const card = resultsList.querySelector(`[data-property-id="${property.id}"]`);
+        if (!card) return;
+
+        card.classList.add("is-active", "is-highlighting");
+        card.querySelector(".property-card-main")?.setAttribute("aria-pressed", "true");
+        if (scroll && !isCompactMapView()) {
+          card.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+        propertyHighlightTimer = window.setTimeout(() => {
+          card.classList.remove("is-highlighting");
+          propertyHighlightTimer = 0;
+        }, 800);
       }
 
       function isCompactMapView() {
@@ -1094,25 +1130,18 @@
 
       function showPropertyDetails(property) {
         if (isCompactMapView()) {
-          infoWindow.close();
-          mobilePropertyContent.replaceChildren(buildInfoWindow(property));
+          mobilePropertyContent.replaceChildren(buildMobilePropertyPreview(property));
           mobilePropertySheet.hidden = false;
           mobilePropertySheet.scrollTop = 0;
           propertyDetailsSurface = "mobile";
-          requestAnimationFrame(() => {
-            mobilePropertySheet.scrollIntoView({ block: "nearest", behavior: "smooth" });
-          });
           return;
         }
 
         hideMobilePropertySheet();
-        infoWindow.setContent(buildInfoWindow(property));
-        infoWindow.open({ map, anchor: property.marker });
-        propertyDetailsSurface = "desktop";
+        propertyDetailsSurface = "list";
       }
 
       function closePropertyDetails({ clearSelection = true } = {}) {
-        infoWindow?.close();
         hideMobilePropertySheet();
         propertyDetailsSurface = null;
         if (clearSelection) {
@@ -1125,7 +1154,7 @@
         if (!selectedPropertyId) return;
         const property = visibleProperties.find(item => item.id === selectedPropertyId);
         if (!property) return;
-        const desiredSurface = isCompactMapView() ? "mobile" : "desktop";
+        const desiredSurface = isCompactMapView() ? "mobile" : "list";
         if (propertyDetailsSurface !== desiredSurface) showPropertyDetails(property);
       }
 
@@ -1135,15 +1164,7 @@
         selectedPropertyId = property.id;
         showPropertyDetails(property);
         if (pan && isCompactMapView()) map.panTo({ lat: property.lat, lng: property.lng });
-
-        clearActiveCard();
-        const card = resultsList.querySelector(`[data-property-id="${property.id}"]`);
-        if (card) {
-          card.classList.add("is-active");
-          if (scrollCard && app.dataset.mobileView !== "list") {
-            card.scrollIntoView({ block: "nearest", behavior: "smooth" });
-          }
-        }
+        highlightPropertyCard(property, { scroll: scrollCard });
       }
 
       function createMarker(property) {
@@ -1284,6 +1305,7 @@
           main.className = "property-card-main";
           main.type = "button";
           main.setAttribute("aria-label", `Show ${property.title} on the map`);
+          main.setAttribute("aria-pressed", String(property.id === selectedPropertyId));
           main.addEventListener("click", () => {
             selectedPropertyId = property.id;
             setMobileView("map");
@@ -1540,6 +1562,11 @@
             if (savedMobileCamera) map.moveCamera(savedMobileCamera);
             clusterer?.render();
           });
+        } else if (isMobile && selectedPropertyId) {
+          requestAnimationFrame(() => {
+            resultsList.querySelector(`[data-property-id="${selectedPropertyId}"]`)
+              ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          });
         }
       }
 
@@ -1648,9 +1675,6 @@
             app.dataset.mapRenderingType = String(map.getRenderingType() ?? "unknown").toLowerCase();
           });
 
-          infoWindow = new google.maps.InfoWindow({
-            maxWidth: 340
-          });
           const markerLibrary = await google.maps.importLibrary("marker");
           MarkerClass = markerLibrary.AdvancedMarkerElement;
           PinClass = markerLibrary.PinElement;
