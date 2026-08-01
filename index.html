@@ -1161,13 +1161,17 @@
         if (propertyDetailsSurface !== "preview") showPropertyDetails(property);
       }
 
-      function openProperty(property, { pan = true, scrollCard = true } = {}) {
-        clusterAnimationId += 1;
-        releaseTravelingClusterMarkers();
+      function openProperty(property, { focusMap = false, pan = true, scrollCard = true } = {}) {
         selectedPropertyId = property.id;
         showPropertyDetails(property);
-        if (pan && isCompactMapView()) map.panTo({ lat: property.lat, lng: property.lng });
         highlightPropertyCard(property, { scroll: scrollCard });
+        if (focusMap) {
+          focusPropertyOnMap(property);
+        } else {
+          clusterAnimationId += 1;
+          releaseTravelingClusterMarkers();
+          if (pan && isCompactMapView()) map.panTo({ lat: property.lat, lng: property.lng });
+        }
       }
 
       function createMarker(property) {
@@ -1312,7 +1316,7 @@
           main.addEventListener("click", () => {
             selectedPropertyId = property.id;
             setMobileView("map");
-            requestAnimationFrame(() => openProperty(property, { scrollCard: false }));
+            requestAnimationFrame(() => openProperty(property, { focusMap: true, scrollCard: false }));
           });
 
           main.appendChild(makePropertyImage(property, "property-thumb"));
@@ -1409,6 +1413,70 @@
         const longitudeZoom = Math.log2(availableWidth / (256 * longitudeFraction));
         const latitudeZoom = Math.log2(availableHeight / (256 * latitudeFraction));
         return Math.max(2, Math.min(16, Math.floor(Math.min(longitudeZoom, latitudeZoom))));
+      }
+
+      function focusPropertyOnMap(property) {
+        if (!map) return;
+
+        const center = map.getCenter();
+        const currentZoom = map.getZoom() ?? 4;
+        const target = { lat: property.lat, lng: property.lng };
+        const targetZoom = Math.min(17, Math.max(currentZoom, 13));
+        const animationId = ++clusterAnimationId;
+
+        showTravelingClusterMarkers([property.marker], map);
+
+        const finish = () => {
+          if (animationId !== clusterAnimationId) return;
+          map.moveCamera({ center: target, zoom: targetZoom });
+          releaseTravelingClusterMarkers();
+          renderViewportResults();
+          highlightPropertyCard(property, { scroll: !isCompactMapView() });
+        };
+
+        if (!center || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          finish();
+          return;
+        }
+
+        const from = { lat: center.lat(), lng: center.lng() };
+        const longitudeDistance = ((target.lng - from.lng + 540) % 360) - 180;
+        const averageLatitude = (from.lat + target.lat) * Math.PI / 360;
+        const geographicDistance = Math.hypot(
+          target.lat - from.lat,
+          longitudeDistance * Math.cos(averageLatitude)
+        );
+        const zoomDistance = Math.abs(targetZoom - currentZoom);
+        const duration = Math.min(1250, 580 + zoomDistance * 55 + Math.min(280, geographicDistance * 3));
+        const smootherStep = progress => progress * progress * progress
+          * (progress * (progress * 6 - 15) + 10);
+        let startTime;
+        let lastFrame = -Infinity;
+
+        const animate = timestamp => {
+          if (animationId !== clusterAnimationId) return;
+          startTime ??= timestamp;
+          const progress = Math.min((timestamp - startTime) / duration, 1);
+
+          if (progress === 1 || timestamp - lastFrame >= CAMERA_FRAME_INTERVAL) {
+            const centerProgress = smootherStep(Math.min(progress / 0.68, 1));
+            const zoomTimeline = Math.max(0, Math.min(1, (progress - 0.06) / 0.94));
+            const zoomProgress = smootherStep(zoomTimeline);
+            map.moveCamera({
+              center: {
+                lat: from.lat + (target.lat - from.lat) * centerProgress,
+                lng: from.lng + longitudeDistance * centerProgress
+              },
+              zoom: currentZoom + (targetZoom - currentZoom) * zoomProgress
+            });
+            lastFrame = timestamp;
+          }
+
+          if (progress < 1) window.requestAnimationFrame(animate);
+          else finish();
+        };
+
+        window.requestAnimationFrame(animate);
       }
 
       function zoomIntoCluster(_event, clickedCluster, targetMap) {
