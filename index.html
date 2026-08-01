@@ -860,6 +860,9 @@
       }
 
       function formatPrice(value) {
+        if (value === null || value === undefined || String(value).trim() === "") {
+          return "Price unavailable";
+        }
         const numeric = Number(value);
         if (!Number.isFinite(numeric)) return "Price unavailable";
         return numeric.toLocaleString("en-US", {
@@ -867,6 +870,14 @@
           currency: "USD",
           maximumFractionDigits: 0
         });
+      }
+
+      function parsePrice(value) {
+        if (typeof value === "number" && Number.isFinite(value)) return value;
+        const cleaned = String(value ?? "").replace(/[$,\s]/g, "");
+        if (!cleaned) return null;
+        const numeric = Number(cleaned);
+        return Number.isFinite(numeric) ? numeric : null;
       }
 
       function normalizeStatus(rawStatus) {
@@ -950,7 +961,7 @@
           return null;
         }
 
-        const numericPrice = Number(cellValue(row, 2));
+        const numericPrice = parsePrice(cellValue(row, 2));
         const numericAcres = Number(cellValue(row, 4));
         const acresLabel = decodeEntities(cellValue(row, 4, true)) || (Number.isFinite(numericAcres) ? String(numericAcres) : "Not listed");
         const stateCode = extractStateCode(address, title);
@@ -961,8 +972,8 @@
           status,
           statusLabel: STATUS_META[status].label,
           title: title || address || "Property",
-          price: Number.isFinite(numericPrice) ? numericPrice : null,
-          priceLabel: decodeEntities(cellValue(row, 2, true)) || formatPrice(numericPrice),
+          price: numericPrice,
+          priceLabel: formatPrice(numericPrice),
           address: address || "Address unavailable",
           acres: Number.isFinite(numericAcres) ? numericAcres : null,
           acresLabel,
@@ -1286,7 +1297,7 @@
           topLine.className = "card-topline";
           topLine.append(createStatusBadge(property), createTextElement("span", "card-price", property.priceLabel || formatPrice(property.price)));
           body.append(topLine, createTextElement("h3", "", property.title));
-          body.appendChild(createTextElement("p", "card-meta", `${property.acresLabel} acres · ${property.address}`));
+          body.appendChild(createTextElement("p", "card-meta", property.address));
           main.appendChild(body);
           card.appendChild(main);
 
