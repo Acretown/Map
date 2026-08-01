@@ -3,469 +3,1673 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Property Map</title>
+  <meta name="description" content="Explore available, pending, and sold AcreTown properties on an interactive map.">
+  <title>AcreTown Property Map</title>
   <style>
-    .map-wrap {
-      width: 100%;
-      max-width: 1000px;
-      margin: 24px auto;
-    }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
-    .hint { max-width: 1000px; margin: 0 auto; padding: 0 16px; color: #333; }
-    code { background:#f4f4f5; padding:2px 6px; border-radius:6px; }
-
-    .infowin { max-width: 280px; }
-    .infowin h3 { margin: 0 0 8px 0; font-size: 16px; }
-    .infowin img { display: block; width: 100%; height: auto; border-radius: 8px; margin: 8px 0; }
-    .infowin p { margin: 4px 0; }
-    .infowin .price { font-weight: 600; }
-
-    /* Filter control styled like native Map/Satellite and attached to its right */
-    .filter-control { font-family: inherit; }
-    .filter-control .fc-wrap {
-      background: #fff;
-      border: 1px solid #dadce0;
-      border-radius: 2px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.24);
-      margin: 10px 0 0 0; /* default; we'll collapse gap next to map type control */
-      display: inline-flex;
-      align-items: center;
-      position: relative;
-      height: 40px; /* align height with native control */
-    }
-    /* Sit flush to the right of the native Map/Satellite control (no gap, shared border) */
-    .gm-style .gm-style-mtc + .filter-control .fc-wrap { margin-left: -1px; border-left: none; border-radius: 0 2px 2px 0; }
-
-    .filter-control button {
-      background: transparent;
-      border: 0;
-      padding: 0 14px;
-      height: 100%;
-      cursor: pointer;
-      font-weight: 600;
-      line-height: 40px;
-      font-size: 16px;
-    }
-    .filter-control button:hover { background: #f1f3f4; }
-
-    .filter-control .menu {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      margin-top: 6px;
-      background: #fff;
-      border: 1px solid #dadce0;
-      border-radius: 2px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.24);
-      padding: 8px 10px;
-      display: none;
-      z-index: 5;
-      min-width: 180px;
-    }
-    .filter-control .menu label { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; }
-    .filter-control .menu .price-filter {
-      border-bottom: 1px solid #e5e7eb;
-      margin-bottom: 8px;
-      padding-bottom: 8px;
-      text-align: center;
-    }
-    .price-filter-title {
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: .04em;
-      margin: 0 0 8px;
-    }
-    .price-filter-slider {
-      position: relative;
-      height: 24px;
-      margin: 24px auto 6px;
-      width: calc(100% - 20px);
-    }
-    .price-filter-slider input[type="range"] {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 100%;
-      position: absolute;
-      left: 0;
-      top: 0;
-      background: none;
-      pointer-events: none;
-      margin: 0;
-    }
-    .price-filter-slider input[type="range"]::-webkit-slider-runnable-track {
-      height: 4px;
-      border-radius: 2px;
-      background: linear-gradient(90deg, #4caf50, #4caf50);
-      pointer-events: none;
-    }
-    .price-filter-slider input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: #fff;
-      border: 2px solid #4caf50;
-      pointer-events: auto;
-      margin-top: -6px;
-      box-shadow: 0 1px 3px rgba(0,0,0,.2);
-    }
-    .price-filter-slider input[type="range"]::-moz-range-track {
-      height: 4px;
-      border-radius: 2px;
-      background: #4caf50;
-    }
-    .price-filter-slider input[type="range"]::-moz-range-thumb {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: #fff;
-      border: 2px solid #4caf50;
-      box-shadow: 0 1px 3px rgba(0,0,0,.2);
-      pointer-events: auto;
-    }
-    .price-filter-values {
-      font-size: 13px;
-      font-weight: 500;
-      text-align: center;
+    :root {
+      color-scheme: light;
+      --brand: #1e6d45;
+      --brand-dark: #164f34;
+      --brand-soft: #eaf5ee;
+      --ink: #15231b;
+      --muted: #607067;
+      --line: #dbe4de;
+      --panel: #ffffff;
+      --page: #f5f8f6;
+      --available: #168a4b;
+      --pending: #d99800;
+      --sold: #cf3e3e;
+      --shadow: 0 16px 40px rgba(20, 53, 35, 0.12);
+      --radius: 18px;
     }
 
-    /* Prevent scrollbars when embedded in an iframe */
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+
     html, body {
       margin: 0;
-      padding: 0;
-      overflow: hidden;
+      min-height: 100%;
+      background: var(--page);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
-    .map-wrap, #map, .gm-style {
-      overflow: hidden !important;
+
+    button, input, select { font: inherit; }
+    button, select, input[type="search"] { min-height: 42px; }
+    button, label, select { -webkit-tap-highlight-color: transparent; }
+
+    .app {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      padding: 22px;
+    }
+
+    .intro {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 16px;
+    }
+
+    .eyebrow {
+      margin: 0 0 4px;
+      color: var(--brand);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(25px, 3vw, 38px);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .intro-copy {
+      max-width: 580px;
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .inventory-note {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 3px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .inventory-note::before {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--available);
+      box-shadow: 0 0 0 4px rgba(22, 138, 75, 0.12);
+      content: "";
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(210px, 1.25fr) auto minmax(150px, 0.55fr) minmax(150px, 0.55fr) auto;
+      align-items: end;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-bottom: 0;
+      border-radius: var(--radius) var(--radius) 0 0;
+      background: var(--panel);
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      border: 1px solid #c9d4cc;
+      border-radius: 10px;
+      background: #fff;
+      color: var(--ink);
+      outline: none;
+      padding: 9px 11px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: normal;
+      text-transform: none;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    button:focus-visible,
+    a:focus-visible {
+      outline: 3px solid rgba(30, 109, 69, 0.25);
+      outline-offset: 2px;
+      border-color: var(--brand);
+    }
+
+    .status-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      min-width: 286px;
+      margin: 0;
+      border: 0;
+      padding: 0 0 1px;
+    }
+
+    .status-toggle {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      padding: 8px 11px;
+      color: #536158;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 750;
+      user-select: none;
+    }
+
+    .status-toggle:has(input:checked) {
+      border-color: #a9c8b5;
+      background: var(--brand-soft);
+      color: var(--brand-dark);
+    }
+
+    .status-toggle input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .status-toggle:has(input:focus-visible) {
+      outline: 3px solid rgba(30, 109, 69, 0.25);
+      outline-offset: 2px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      flex: 0 0 auto;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      box-shadow: 0 0 0 1px rgba(21, 35, 27, 0.18);
+    }
+
+    .status-dot.available { background: var(--available); }
+    .status-dot.pending { background: var(--pending); }
+    .status-dot.sold { background: var(--sold); }
+
+    .reset-button {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--brand-dark);
+      padding: 9px 14px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .reset-button:hover { background: var(--brand-soft); }
+
+    .mobile-tabs {
+      display: none;
+      border: 1px solid var(--line);
+      border-bottom: 0;
+      background: #fff;
+      padding: 10px;
+      gap: 8px;
+    }
+
+    .mobile-tab {
+      flex: 1;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--muted);
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .mobile-tab[aria-selected="true"] {
+      border-color: var(--brand);
+      background: var(--brand);
+      color: #fff;
+    }
+
+    .map-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 370px;
+      height: clamp(580px, 73vh, 760px);
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 0 0 var(--radius) var(--radius);
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .map-panel {
+      position: relative;
+      min-width: 0;
+      background: #dce9df;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .map-state {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(245, 248, 246, 0.9);
+      backdrop-filter: blur(3px);
+    }
+
+    .map-state[hidden] { display: none; }
+
+    .state-card {
+      width: min(390px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      padding: 22px;
+      text-align: center;
+      box-shadow: 0 14px 36px rgba(21, 35, 27, 0.14);
+    }
+
+    .state-spinner {
+      width: 32px;
+      height: 32px;
+      margin: 0 auto 13px;
+      border: 3px solid #d7e7dc;
+      border-top-color: var(--brand);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .state-card h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .state-card p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .retry-button {
+      margin-top: 15px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--brand);
+      color: #fff;
+      padding: 9px 15px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .results-panel {
+      display: flex;
+      min-width: 0;
+      min-height: 0;
+      flex-direction: column;
+      border-left: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 15px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .results-header h2 {
+      margin: 0;
+      font-size: 17px;
+    }
+
+    .result-count {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .results-list {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      overscroll-behavior: contain;
+      padding: 10px;
+      scrollbar-gutter: stable;
+    }
+
+    .property-card {
+      overflow: hidden;
+      margin: 0 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+    }
+
+    .property-card:hover,
+    .property-card.is-active {
+      border-color: #9bc3aa;
+      box-shadow: 0 8px 20px rgba(30, 109, 69, 0.11);
+      transform: translateY(-1px);
+    }
+
+    .property-card-main {
+      display: grid;
+      width: 100%;
+      min-height: 0;
+      grid-template-columns: 105px minmax(0, 1fr);
+      border: 0;
+      background: #fff;
+      color: inherit;
+      padding: 0;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .property-thumb {
+      position: relative;
+      height: 100%;
+      min-height: 112px;
+      overflow: hidden;
+      background: #dfe9e2;
+    }
+
+    .property-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .property-thumb-fallback {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: #617169;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .property-card-body {
+      min-width: 0;
+      padding: 11px 12px 9px;
+    }
+
+    .card-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .card-price {
+      color: var(--brand-dark);
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .property-card h3 {
+      display: -webkit-box;
+      overflow: hidden;
+      margin: 0;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .card-meta {
+      display: -webkit-box;
+      overflow: hidden;
+      margin: 6px 0 0;
+      color: var(--muted);
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .card-link {
+      display: block;
+      border-top: 1px solid var(--line);
+      color: var(--brand);
+      padding: 8px 12px;
+      text-align: right;
+      font-size: 11px;
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    .card-link:hover { background: var(--brand-soft); }
+
+    .empty-results {
+      display: grid;
+      min-height: 240px;
+      place-items: center;
+      padding: 28px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .infowin {
+      width: min(310px, 72vw);
+      color: var(--ink);
+      font: 14px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .infowin-photo {
+      width: 100%;
+      height: 145px;
+      object-fit: cover;
+      border-radius: 10px;
+      background: #e4ece7;
+    }
+
+    .infowin h3 {
+      margin: 10px 0 6px;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    .infowin p {
+      margin: 4px 0;
+      color: #4f5f56;
+    }
+
+    .infowin strong { color: var(--ink); }
+
+    .infowin-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      margin-top: 10px;
+      border-radius: 9px;
+      background: var(--brand);
+      color: #fff;
+      padding: 8px 12px;
+      font-weight: 850;
+      text-decoration: none;
+    }
+
+    .infowin-link:hover { background: var(--brand-dark); }
+
+    .gm-style .gm-style-iw-c { border-radius: 14px; }
+
+    .mobile-property-sheet {
+      position: absolute;
+      z-index: 5;
+      right: 12px;
+      bottom: 12px;
+      left: 12px;
+      max-height: min(47%, 320px);
+      overflow: auto;
+      border: 1px solid rgba(219, 228, 222, 0.96);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.98);
+      padding: 14px 48px 14px 14px;
+      box-shadow: 0 18px 45px rgba(20, 53, 35, 0.24);
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .mobile-property-sheet .infowin { width: auto; }
+
+    .mobile-property-sheet .infowin-photo {
+      float: left;
+      width: 104px;
+      height: 84px;
+      margin: 0 12px 8px 0;
+    }
+
+    .mobile-property-sheet .infowin h3 { margin-top: 0; }
+
+    .mobile-property-close {
+      position: absolute;
+      z-index: 1;
+      top: 8px;
+      right: 8px;
+      display: grid;
+      width: 36px;
+      min-height: 36px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: #fff;
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 24px;
+      line-height: 1;
+      box-shadow: 0 4px 12px rgba(20, 53, 35, 0.12);
+    }
+
+    .mobile-property-close:hover { background: var(--brand-soft); }
+
+    @media (max-width: 1120px) {
+      .toolbar {
+        grid-template-columns: minmax(220px, 1fr) auto minmax(150px, 0.55fr) minmax(150px, 0.55fr);
+      }
+      .reset-button { grid-column: 4; }
+      .map-shell { grid-template-columns: minmax(0, 1fr) 340px; }
+    }
+
+    @media (max-width: 820px) {
+      .app { padding: 12px; }
+      .intro { align-items: start; flex-direction: column; gap: 8px; }
+      .inventory-note { margin-bottom: 0; }
+      .toolbar { grid-template-columns: 1fr 1fr; }
+      .search-field, .status-group { grid-column: 1 / -1; }
+      .status-group { min-width: 0; }
+      .reset-button { grid-column: 1 / -1; }
+      .mobile-tabs { display: flex; }
+      .map-shell {
+        display: block;
+        height: clamp(500px, 70vh, 680px);
+      }
+      .map-panel, .results-panel { width: 100%; height: 100%; }
+      .results-panel { border-left: 0; }
+      .app[data-mobile-view="map"] .results-panel { display: none; }
+      .app[data-mobile-view="list"] .map-panel { display: none; }
+      .results-list { padding: 12px; }
+      .gm-style .gm-style-iw-a { display: none !important; }
+    }
+
+    @media (max-width: 480px) {
+      .app { padding: 0; }
+      .intro { padding: 16px 16px 12px; }
+      .intro-copy { font-size: 13px; }
+      .toolbar { border-right: 0; border-left: 0; border-radius: 0; padding: 12px; }
+      .mobile-tabs { border-right: 0; border-left: 0; }
+      .map-shell { border-right: 0; border-left: 0; border-radius: 0; box-shadow: none; }
+      .status-toggle { flex: 1 1 auto; justify-content: center; }
+      .property-card-main { grid-template-columns: 96px minmax(0, 1fr); }
+      .mobile-property-sheet {
+        right: 8px;
+        bottom: max(8px, env(safe-area-inset-bottom));
+        left: 8px;
+        max-height: min(50%, 290px);
+      }
+      .mobile-property-sheet .infowin-photo { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="map-wrap">
-    <div id="map" style="height: 600px; width: 100%;"></div>
+  <main class="app" id="property-app" data-mobile-view="map">
+    <header class="intro">
+      <div>
+        <p class="eyebrow">AcreTown Properties</p>
+        <h1>Find your piece of land</h1>
+        <p class="intro-copy">Search live inventory, narrow it by status or price, and select any property for details.</p>
+      </div>
+      <div class="inventory-note">Live inventory</div>
+    </header>
 
-    <script async
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDyS-QF9IzB_PXNsdXh1H6Ss0Vf-mM0eGI&callback=initMap">
-    </script>
+    <section class="toolbar" aria-label="Property filters">
+      <label class="field search-field" for="property-search">
+        Search
+        <input id="property-search" type="search" placeholder="County, state, city, ZIP, address…" autocomplete="off" list="property-search-suggestions">
+        <datalist id="property-search-suggestions"></datalist>
+      </label>
 
-    <script>
-      async function initMap() {
-        const map = new google.maps.Map(document.getElementById("map"), {
-          zoom: 3,
-          center: { lat: 39.5, lng: -98.35 },
-          streetViewControl: false
-        });
-        // Continental US bounds as a LatLngBounds instance (more reliable)
-        const USA_BOUNDS = new google.maps.LatLngBounds(
-          new google.maps.LatLng(24.7433195, -124.7844079),
-          new google.maps.LatLng(49.3457868,  -66.9513812)
-        );
+      <fieldset class="status-group" aria-label="Show property statuses">
+        <legend style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Show statuses</legend>
+        <label class="status-toggle">
+          <input type="checkbox" value="available" data-status-filter checked>
+          <span class="status-dot available" aria-hidden="true"></span>
+          Available
+        </label>
+        <label class="status-toggle">
+          <input type="checkbox" value="pending" data-status-filter checked>
+          <span class="status-dot pending" aria-hidden="true"></span>
+          Pending
+        </label>
+        <label class="status-toggle">
+          <input type="checkbox" value="sold" data-status-filter>
+          <span class="status-dot sold" aria-hidden="true"></span>
+          Sold
+        </label>
+      </fieldset>
 
-        // Add some padding around US so popups near the borders aren't clipped
-        const VIEW_BOUNDS = new google.maps.LatLngBounds(
-          new google.maps.LatLng(5,  -140),   // more room south & west
-          new google.maps.LatLng(72,  -50)    // much more room north & east
-        );
+      <label class="field" for="price-min">
+        Minimum price
+        <select id="price-min"><option value="0">No minimum</option></select>
+      </label>
 
-        // Keep users roughly within North America but allow more zoom-out
-        map.setOptions({
-          restriction: { latLngBounds: VIEW_BOUNDS, strictBounds: false },
-          minZoom: 2
-        });
-        map.setOptions({
-          mapTypeControl: true,
-          mapTypeControlOptions: {
-            style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
-            position: google.maps.ControlPosition.TOP_LEFT
-          }
-        });
+      <label class="field" for="price-max">
+        Maximum price
+        <select id="price-max"><option value="Infinity">No maximum</option></select>
+      </label>
 
-        // UPDATED: Points to your new Sheet ID and "Map Feed" tab GID
-        const sheetsToLoad = [
-          { 
-            sheetId: "1UU6QeID1wbqugVXkJJM6DWZpHhzqKUuCYarKB-SWK0I", 
-            gid: "283380080" 
-          }
-        ];
+      <button class="reset-button" id="reset-filters" type="button">Reset filters</button>
+    </section>
 
-        async function fetchSheetRows({ sheetId, gid }) {
-          const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&gid=${gid}`;
-          const response = await fetch(url);
-          const text = await response.text();
-          const json = JSON.parse(text.substring(47, text.length - 2));
-          return json.table.rows || [];
-        }
+    <div class="mobile-tabs" role="tablist" aria-label="Property display">
+      <button class="mobile-tab" id="map-tab" type="button" role="tab" aria-selected="true" aria-controls="map-panel">Map</button>
+      <button class="mobile-tab" id="list-tab" type="button" role="tab" aria-selected="false" aria-controls="results-panel">List</button>
+    </div>
 
-        const rowsArray = await Promise.all(sheetsToLoad.map(fetchSheetRows));
-        const rows = rowsArray.flat();
-
-        const infoWindow = new google.maps.InfoWindow();
-        const bounds = new google.maps.LatLngBounds();
-
-        const markers = [];
-        let highestPrice = 0;
-        let sliderReady = false;
-        const PRICE_CAP = 100000;
-        let sliderMaxValue = 0;
-        let sliderHasOverflowTier = false;
-
-        // Create a Filter control and place it immediately to the right of Map/Satellite (TOP_LEFT)
-        const filterDiv = document.createElement('div');
-        filterDiv.className = 'filter-control';
-        const fcWrap = document.createElement('div');
-        fcWrap.className = 'fc-wrap';
-        const fcBtn = document.createElement('button');
-        fcBtn.type = 'button';
-        fcBtn.textContent = 'Filter';
-        fcWrap.appendChild(fcBtn);
-        const fcMenu = document.createElement('div');
-        fcMenu.className = 'menu';
-        fcMenu.innerHTML = `
-          <div class="price-filter">
-            <p class="price-filter-title">FILTER BY PRICE</p>
-            <div class="price-filter-slider">
-              <input type="range" id="price-min" min="0" max="0" value="0" step="1">
-              <input type="range" id="price-max" min="0" max="0" value="0" step="1">
-            </div>
-            <div class="price-filter-values" id="price-values">Price: $0 - $0</div>
+    <section class="map-shell">
+      <section class="map-panel" id="map-panel" role="tabpanel" aria-labelledby="map-tab">
+        <div id="map" role="region" aria-label="Interactive property map"></div>
+        <section class="mobile-property-sheet" id="mobile-property-sheet" aria-label="Selected property details" hidden>
+          <button class="mobile-property-close" id="mobile-property-close" type="button" aria-label="Close property details">&times;</button>
+          <div id="mobile-property-content"></div>
+        </section>
+        <div class="map-state" id="map-state" role="status" aria-live="polite">
+          <div class="state-card">
+            <div class="state-spinner" id="state-spinner" aria-hidden="true"></div>
+            <h2 id="state-title">Loading properties…</h2>
+            <p id="state-message">Connecting to the live inventory.</p>
+            <button class="retry-button" id="retry-button" type="button" hidden>Try again</button>
           </div>
-          <label><input type="checkbox" id="fc-hide-sold"> Hide Sold</label>
-          <label><input type="checkbox" id="fc-hide-available"> Hide Available</label>
-        `;
-        fcWrap.appendChild(fcMenu);
-        filterDiv.appendChild(fcWrap);
-        map.controls[google.maps.ControlPosition.TOP_LEFT].push(filterDiv);
+        </div>
+      </section>
 
-        const priceMinInput = fcMenu.querySelector('#price-min');
-        const priceMaxInput = fcMenu.querySelector('#price-max');
-        const priceValueEl = fcMenu.querySelector('#price-values');
+      <aside class="results-panel" id="results-panel" role="tabpanel" aria-labelledby="list-tab">
+        <div class="results-header">
+          <h2>Properties</h2>
+          <div class="result-count" id="result-count" aria-live="polite">Loading…</div>
+        </div>
+        <div class="results-list" id="results-list"></div>
+      </aside>
+    </section>
+  </main>
 
-        const updatePriceDisplay = () => {
-          if (!priceMinInput || !priceMaxInput || !priceValueEl) return;
-          const minVal = Math.min(Number(priceMinInput.value), Number(priceMaxInput.value));
-          const maxVal = Math.max(Number(priceMinInput.value), Number(priceMaxInput.value));
-          priceMinInput.value = String(minVal);
-          priceMaxInput.value = String(maxVal);
-          const upperLabel = (sliderHasOverflowTier && maxVal >= sliderMaxValue)
-            ? `${formatPrice(sliderMaxValue)}+`
-            : formatPrice(maxVal);
-          priceValueEl.textContent = `Price: ${formatPrice(minVal)} - ${upperLabel}`;
-        };
+  <script src="https://unpkg.com/@googlemaps/markerclusterer@2.6.2/dist/index.min.js"></script>
+  <script>
+    (() => {
+      "use strict";
 
-        const handlePriceInput = (inputEl) => {
-          if (!priceMinInput || !priceMaxInput) return;
-          let minVal = Number(priceMinInput.value);
-          let maxVal = Number(priceMaxInput.value);
-          if (minVal > maxVal) {
-            if (inputEl === priceMinInput) {
-              priceMaxInput.value = String(minVal);
-              maxVal = minVal;
-            } else {
-              priceMinInput.value = String(maxVal);
-              minVal = maxVal;
-            }
-          }
-          updatePriceDisplay();
-          if (sliderReady) applyFilters();
-        };
-
-        priceMinInput?.addEventListener('input', () => handlePriceInput(priceMinInput));
-        priceMaxInput?.addEventListener('input', () => handlePriceInput(priceMaxInput));
-
-        // Toggle menu open/close; keep open when clicking inside
-        fcBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          fcMenu.style.display = (fcMenu.style.display === 'block') ? 'none' : 'block';
-        });
-        document.addEventListener('click', (e) => {
-          if (!fcWrap.contains(e.target)) fcMenu.style.display = 'none';
-        });
-
-        const getPriceBounds = () => {
-          if (!sliderReady || !priceMinInput || !priceMaxInput) {
-            return { min: 0, max: Number.POSITIVE_INFINITY };
-          }
-          const low = Math.min(Number(priceMinInput.value), Number(priceMaxInput.value));
-          let high = Math.max(Number(priceMinInput.value), Number(priceMaxInput.value));
-          if (sliderHasOverflowTier && high >= sliderMaxValue) {
-            high = Number.POSITIVE_INFINITY;
-          }
-          return { min: low, max: high };
-        };
-
-        function applyFilters() {
-          const hideAvail = document.getElementById('fc-hide-available')?.checked;
-          const hideSold  = document.getElementById('fc-hide-sold')?.checked;
-          const { min: minPrice, max: maxPrice } = getPriceBounds();
-          markers.forEach(m => {
-            const priceValue = typeof m.priceValue === 'number' ? m.priceValue : 0;
-            const hideByPrice = priceValue < minPrice || priceValue > maxPrice;
-            const hide = (m.isSold && hideSold) || (!m.isSold && hideAvail) || hideByPrice;
-            m.setVisible(!hide);
-          });
+      const SHEETS = [
+        { sheetId: "1UU6QeID1wbqugVXkJJM6DWZpHhzqKUuCYarKB-SWK0I", sheetName: "Map Feed V2" }
+      ];
+      const COORDINATE_OVERRIDES = [
+        {
+          link: "https://www.acretown.com/property/greenbush/",
+          address: "100 E Ridge Rd, Greenbush, Maine 04418",
+          lat: 45.1221,
+          lng: -68.6001
         }
-        fcMenu.addEventListener('change', applyFilters);
+      ];
 
+      // Replace DEMO_MAP_ID with a production Map ID from the same Google Cloud project.
+      const MAP_ID = "DEMO_MAP_ID";
+      const PRICE_STEPS = [
+        10000, 25000, 50000, 75000, 100000, 150000,
+        200000, 250000, 350000, 500000, 750000,
+        1000000, 1500000, 2000000, 3000000, 5000000
+      ];
+      const STATUS_META = {
+        available: { label: "Available", color: "#168a4b", border: "#0d5f32", rank: 0 },
+        pending: { label: "Pending", color: "#e0a500", border: "#9b6d00", rank: 1 },
+        sold: { label: "Sold", color: "#cf3e3e", border: "#8f2828", rank: 2 }
+      };
+      const STATE_NAMES = {
+        AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California",
+        CO: "Colorado", CT: "Connecticut", DE: "Delaware", FL: "Florida", GA: "Georgia",
+        HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa",
+        KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland",
+        MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi", MO: "Missouri",
+        MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire", NJ: "New Jersey",
+        NM: "New Mexico", NY: "New York", NC: "North Carolina", ND: "North Dakota", OH: "Ohio",
+        OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina",
+        SD: "South Dakota", TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont",
+        VA: "Virginia", WA: "Washington", WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming",
+        DC: "District of Columbia"
+      };
+      const SEARCH_WORD_ALIASES = {
+        road: "rd", street: "st", avenue: "ave", boulevard: "blvd", drive: "dr",
+        lane: "ln", court: "ct", circle: "cir", highway: "hwy", parkway: "pkwy",
+        place: "pl", terrace: "ter", trail: "trl", route: "rte"
+      };
 
-        rows.forEach(r => {
-          const status = (r.c[0]?.v || "").trim();
-          const title = r.c[1]?.v || "";
-          const price = r.c[2]?.v || "";
-          const address = r.c[3]?.v || "";
-          const acres = r.c[4]?.v || "";
-          const lat = parseFloat(r.c[5]?.v) || 0;
-          const lng = parseFloat(r.c[6]?.v) || 0;
-          const link = r.c[7]?.v || "#";
-          const photo = r.c[8]?.v || "https://placehold.co/800x500?text=No+Image";
+      const app = document.getElementById("property-app");
+      const searchInput = document.getElementById("property-search");
+      const searchSuggestions = document.getElementById("property-search-suggestions");
+      const minPriceSelect = document.getElementById("price-min");
+      const maxPriceSelect = document.getElementById("price-max");
+      const resetButton = document.getElementById("reset-filters");
+      const resultsList = document.getElementById("results-list");
+      const resultCount = document.getElementById("result-count");
+      const mapState = document.getElementById("map-state");
+      const stateSpinner = document.getElementById("state-spinner");
+      const stateTitle = document.getElementById("state-title");
+      const stateMessage = document.getElementById("state-message");
+      const retryButton = document.getElementById("retry-button");
+      const mapTab = document.getElementById("map-tab");
+      const listTab = document.getElementById("list-tab");
+      const mobilePropertySheet = document.getElementById("mobile-property-sheet");
+      const mobilePropertyContent = document.getElementById("mobile-property-content");
+      const mobilePropertyClose = document.getElementById("mobile-property-close");
 
-          if (!lat || !lng) return;
+      let map;
+      let infoWindow;
+      let MarkerClass;
+      let PinClass;
+      let clusterer;
+      let properties = [];
+      let visibleProperties = [];
+      let selectedPropertyId = null;
+      let lastVisibleBounds = null;
+      let clusterAnimationId = 0;
+      let travelingClusterMarkers = [];
+      let propertyDetailsSurface = null;
+      let savedMobileCamera = null;
+      let viewportListTimer = 0;
+      let mapWakeTimer = 0;
+      const CAMERA_FRAME_INTERVAL = 1000 / 60;
 
-          const normalizedStatus = (status || "").toLowerCase().trim();
-          const validStatuses = ["full marketing", "sale pending", "basic marketing", "sold"];
-          const matchedStatus = validStatuses.find(s => normalizedStatus.startsWith(s));
-          if (!matchedStatus) return;
-
-          // Clean display name
-          let displayStatus = status;
-          if (/^(basic marketing|full marketing)$/i.test(status)) {
-            displayStatus = "Available";
-          } else if (/^sale pending/i.test(status)) {
-            displayStatus = "Sale Pending";
+      function decodeEntities(value) {
+        const namedEntities = {
+          amp: "&",
+          apos: "'",
+          gt: ">",
+          lt: "<",
+          nbsp: "\u00a0",
+          quot: "\""
+        };
+        return String(value ?? "").replace(
+          /&#(\d+);|&#x([0-9a-f]+);|&(amp|apos|gt|lt|nbsp|quot);/gi,
+          (match, decimal, hexadecimal, named) => {
+            if (named) return namedEntities[named.toLowerCase()] ?? match;
+            const codePoint = Number.parseInt(decimal || hexadecimal, decimal ? 10 : 16);
+            return Number.isInteger(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
+              ? String.fromCodePoint(codePoint)
+              : match;
           }
+        );
+      }
 
-          const isSold = normalizedStatus === 'sold';
-
-          // Marker colors: sold = red, pending = yellow, available = green
-          const iconUrl = (() => {
-            if (/^sold/.test(normalizedStatus)) {
-              return "https://maps.google.com/mapfiles/ms/icons/red-dot.png";
-            }
-            if (/^sale pending/.test(normalizedStatus)) {
-              return "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png";
-            }
-            return "https://maps.google.com/mapfiles/ms/icons/green-dot.png";
-          })();
-
-          const priceValue = parsePrice(price);
-
-          const marker = new google.maps.Marker({
-            position: { lat, lng },
-            map,
-            title,
-            icon: iconUrl,
-            zIndex: normalizedStatus === "sold" ? 1 : 2
-          });
-          marker.isSold = isSold; // for filtering
-          marker.priceValue = priceValue;
-          markers.push(marker);
-
-          highestPrice = Math.max(highestPrice, priceValue);
-
-          marker.addListener("click", () => {
-            const container = document.createElement("div");
-            container.className = "infowin";
-            container.innerHTML = `
-              <h3>${title}</h3>
-              <img id="iw-img" src="${photo}" alt="Featured photo for ${title}">
-              <p><strong>Status:</strong> ${displayStatus}</p>
-              <p><strong>Address:</strong> ${address}</p>
-              <p><strong>Size:</strong> ${acres} acres</p>
-              <p><strong>Price:</strong> ${formatPrice(price)}</p>
-              <p><a href="${link}" target="_blank">View Property</a></p>
-            `;
-
-            const img = container.querySelector('#iw-img');
-            if (img) {
-              img.addEventListener('load', () => infoWindow.setContent(container));
-              img.addEventListener('error', () => {
-                img.src = 'https://placehold.co/800x500?text=No+Image';
-                infoWindow.setContent(container);
-              });
-            }
-
-            infoWindow.setContent(container);
-            infoWindow.open({ map, anchor: marker });
-            // Ensure the InfoWindow is fully visible only if it's actually offscreen
-            google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
-              const mapEl = document.getElementById('map');
-              const iwEl = document.querySelector('.gm-style-iw');
-              if (!mapEl || !iwEl) return;
-
-              setTimeout(() => {
-                const pad = 12;
-                const mr = mapEl.getBoundingClientRect();
-                const iwFrame = iwEl.closest('div[role="dialog"]') || iwEl;
-                const ir = iwFrame.getBoundingClientRect();
-
-                let dx = 0, dy = 0;
-
-                // Only pan if the InfoWindow is actually cropped out of view
-                if (ir.top < mr.top + pad) dy = (mr.top + pad) - ir.top; // offscreen above
-                else if (ir.bottom > mr.bottom - pad) dy = (mr.bottom - pad) - ir.bottom; // offscreen below
-
-                if (ir.left < mr.left + pad) dx = (mr.left + pad) - ir.left; // offscreen left
-                else if (ir.right > mr.right - pad) dx = (mr.right - pad) - ir.right; // offscreen right
-
-                if (dx !== 0 || dy !== 0) {
-                  map.panBy(dx, dy);
-                }
-              }, 250);
-            });
-          });
-
-          bounds.extend(marker.getPosition());
-        });
-
-        if (priceMinInput && priceMaxInput) {
-          sliderHasOverflowTier = highestPrice > PRICE_CAP;
-          sliderMaxValue = sliderHasOverflowTier ? PRICE_CAP : (highestPrice || PRICE_CAP);
-          priceMinInput.max = sliderMaxValue;
-          priceMaxInput.max = sliderMaxValue;
-          priceMinInput.value = 0;
-          priceMaxInput.value = sliderMaxValue;
-          sliderReady = markers.length > 0 && sliderMaxValue > 0;
-          updatePriceDisplay();
+      function safeHttpUrl(value) {
+        if (!value) return null;
+        try {
+          const url = new URL(String(value), window.location.href);
+          return ["http:", "https:"].includes(url.protocol) ? url.href : null;
+        } catch {
+          return null;
         }
-
-        if (bounds.isEmpty()) {
-          // No markers → default to US frame
-          map.fitBounds(USA_BOUNDS);
-          map.setZoom(Math.max(map.getZoom(), 4));
-        } else {
-          // Fit to markers, but never beyond US/world
-          map.fitBounds(bounds);
-          google.maps.event.addListenerOnce(map, 'idle', () => {
-            if (map.getZoom() < 3) map.setZoom(4);
-            const center = map.getCenter();
-            if (!VIEW_BOUNDS.contains(center)) {
-              map.fitBounds(USA_BOUNDS); // start view is still the US frame
-              map.setZoom(Math.max(map.getZoom(), 4));
-            }
-          });
-        }
-        if (typeof applyFilters === 'function') applyFilters();
       }
 
       function formatPrice(value) {
-        if (!value) return '$0';
-        // Remove any existing non-numeric characters except '.'
-        const num = parseFloat(String(value).replace(/[^0-9.]/g, ''));
-        if (isNaN(num)) return value;
-        return num.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 });
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) return "Price unavailable";
+        return numeric.toLocaleString("en-US", {
+          style: "currency",
+          currency: "USD",
+          maximumFractionDigits: 0
+        });
       }
 
-      function parsePrice(value) {
-        if (value === undefined || value === null) return 0;
-        const matches = String(value).match(/[0-9.,]+/g);
-        if (!matches) return 0;
-        return matches.reduce((max, chunk) => {
-          const numeric = parseFloat(chunk.replace(/,/g, ''));
-          if (isNaN(numeric)) return max;
-          return Math.max(max, numeric);
-        }, 0);
+      function normalizeStatus(rawStatus) {
+        const normalized = String(rawStatus ?? "").trim().toLowerCase();
+        if (normalized.startsWith("sold")) return "sold";
+        if (normalized === "pending" || normalized.startsWith("sale pending")) return "pending";
+        if (normalized === "available" || normalized.startsWith("full marketing") || normalized.startsWith("basic marketing")) return "available";
+        return null;
       }
-    </script>
-  </div>
+
+      function normalizeSearchText(value) {
+        const normalized = String(value ?? "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLocaleLowerCase()
+          .replace(/[^a-z0-9]+/g, " ")
+          .trim()
+          .replace(/\s+/g, " ");
+        return normalized
+          .split(" ")
+          .filter(Boolean)
+          .map(word => SEARCH_WORD_ALIASES[word] ?? word)
+          .join(" ");
+      }
+
+      function extractStateCode(...values) {
+        for (const value of values) {
+          const matches = String(value ?? "").matchAll(/,\s*([A-Z]{2})(?=\s|\d|$)/g);
+          for (const match of matches) {
+            if (STATE_NAMES[match[1]]) return match[1];
+          }
+        }
+        return "";
+      }
+
+      function cellValue(row, index, formatted = false) {
+        const cell = row?.c?.[index];
+        if (!cell) return "";
+        if (formatted && cell.f != null) return cell.f;
+        return cell.v ?? "";
+      }
+
+      function parseGvizResponse(text) {
+        const prefix = "google.visualization.Query.setResponse(";
+        const start = text.indexOf(prefix);
+        const end = text.lastIndexOf(");");
+        if (start === -1 || end === -1 || end <= start) {
+          throw new Error("The inventory response was not recognized.");
+        }
+        return JSON.parse(text.slice(start + prefix.length, end));
+      }
+
+      async function fetchSheetRows({ sheetId, gid, sheetName }) {
+        const sheetSelector = sheetName
+          ? `&sheet=${encodeURIComponent(sheetName)}`
+          : `&gid=${encodeURIComponent(gid)}`;
+        const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sheetId)}/gviz/tq?tqx=out:json${sheetSelector}`;
+        const response = await fetch(url, { cache: "no-store" });
+        if (!response.ok) throw new Error(`Inventory request failed (${response.status}).`);
+        const payload = parseGvizResponse(await response.text());
+        if (payload.status && payload.status !== "ok") throw new Error("The inventory source returned an error.");
+        return payload.table?.rows ?? [];
+      }
+
+      function rowToProperty(row, index) {
+        const rawStatus = decodeEntities(cellValue(row, 0));
+        const status = normalizeStatus(rawStatus);
+        const title = decodeEntities(cellValue(row, 1)).trim();
+        const address = decodeEntities(cellValue(row, 3)).trim();
+        const rawLat = cellValue(row, 5);
+        const rawLng = cellValue(row, 6);
+        const link = safeHttpUrl(cellValue(row, 7));
+        const coordinateOverride = COORDINATE_OVERRIDES.find(override => (
+          override.link === link
+          && normalizeSearchText(override.address) === normalizeSearchText(address)
+        ));
+        if (String(rawLat).trim() === "" || String(rawLng).trim() === "") return null;
+        const lat = coordinateOverride?.lat ?? Number(rawLat);
+        const lng = coordinateOverride?.lng ?? Number(rawLng);
+        if (!status || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+          return null;
+        }
+
+        const numericPrice = Number(cellValue(row, 2));
+        const numericAcres = Number(cellValue(row, 4));
+        const acresLabel = decodeEntities(cellValue(row, 4, true)) || (Number.isFinite(numericAcres) ? String(numericAcres) : "Not listed");
+        const stateCode = extractStateCode(address, title);
+        const stateName = STATE_NAMES[stateCode] ?? "";
+
+        return {
+          id: `property-${index}`,
+          status,
+          statusLabel: STATUS_META[status].label,
+          title: title || address || "Property",
+          price: Number.isFinite(numericPrice) ? numericPrice : null,
+          priceLabel: decodeEntities(cellValue(row, 2, true)) || formatPrice(numericPrice),
+          address: address || "Address unavailable",
+          acres: Number.isFinite(numericAcres) ? numericAcres : null,
+          acresLabel,
+          stateCode,
+          stateName,
+          searchText: normalizeSearchText(`${title} ${address} ${STATUS_META[status].label} ${acresLabel} ${stateCode} ${stateName}`),
+          lat,
+          lng,
+          link,
+          photo: safeHttpUrl(cellValue(row, 8)),
+          marker: null
+        };
+      }
+
+      function deduplicateProperties(items) {
+        const uniqueProperties = new Map();
+        items.forEach(property => {
+          const identity = [
+            normalizeSearchText(property.title),
+            normalizeSearchText(property.address),
+            normalizeSearchText(property.acresLabel),
+            property.link
+          ].join("|");
+          uniqueProperties.set(identity, property);
+        });
+        return [...uniqueProperties.values()];
+      }
+
+      function createTextElement(tag, className, text) {
+        const element = document.createElement(tag);
+        if (className) element.className = className;
+        element.textContent = text;
+        return element;
+      }
+
+      function createStatusBadge(property) {
+        const badge = document.createElement("span");
+        badge.className = "status-badge";
+        const dot = document.createElement("span");
+        dot.className = `status-dot ${property.status}`;
+        dot.setAttribute("aria-hidden", "true");
+        badge.append(dot, document.createTextNode(property.statusLabel));
+        return badge;
+      }
+
+      function makePropertyImage(property, className) {
+        const wrapper = document.createElement("div");
+        wrapper.className = className;
+        const fallback = createTextElement("span", "property-thumb-fallback", "AcreTown");
+        wrapper.appendChild(fallback);
+        if (property.photo) {
+          const image = document.createElement("img");
+          image.src = property.photo;
+          image.alt = `Featured view of ${property.title}`;
+          image.loading = "lazy";
+          image.decoding = "async";
+          image.addEventListener("load", () => fallback.remove(), { once: true });
+          image.addEventListener("error", () => image.remove(), { once: true });
+          wrapper.appendChild(image);
+        }
+        return wrapper;
+      }
+
+      function buildInfoWindow(property) {
+        const container = document.createElement("div");
+        container.className = "infowin";
+
+        if (property.photo) {
+          const image = document.createElement("img");
+          image.className = "infowin-photo";
+          image.src = property.photo;
+          image.alt = `Featured view of ${property.title}`;
+          image.addEventListener("error", () => image.remove(), { once: true });
+          container.appendChild(image);
+        }
+
+        container.appendChild(createTextElement("h3", "", property.title));
+        const status = document.createElement("p");
+        const statusLabel = createTextElement("strong", "", "Status: ");
+        status.append(statusLabel, document.createTextNode(property.statusLabel));
+        container.appendChild(status);
+
+        const address = document.createElement("p");
+        address.append(createTextElement("strong", "", "Address: "), document.createTextNode(property.address));
+        container.appendChild(address);
+
+        const size = document.createElement("p");
+        size.append(createTextElement("strong", "", "Size: "), document.createTextNode(`${property.acresLabel} acres`));
+        container.appendChild(size);
+
+        const price = document.createElement("p");
+        price.append(createTextElement("strong", "", "Price: "), document.createTextNode(property.priceLabel || formatPrice(property.price)));
+        container.appendChild(price);
+
+        if (property.link) {
+          const link = createTextElement("a", "infowin-link", "View property");
+          link.href = property.link;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          container.appendChild(link);
+        }
+
+        return container;
+      }
+
+      function clearActiveCard() {
+        resultsList.querySelectorAll(".property-card.is-active").forEach(card => card.classList.remove("is-active"));
+      }
+
+      function isCompactMapView() {
+        return window.matchMedia("(max-width: 820px)").matches;
+      }
+
+      function hideMobilePropertySheet() {
+        mobilePropertySheet.hidden = true;
+        mobilePropertyContent.replaceChildren();
+      }
+
+      function showPropertyDetails(property) {
+        if (isCompactMapView()) {
+          infoWindow.close();
+          mobilePropertyContent.replaceChildren(buildInfoWindow(property));
+          mobilePropertySheet.hidden = false;
+          mobilePropertySheet.scrollTop = 0;
+          propertyDetailsSurface = "mobile";
+          requestAnimationFrame(() => {
+            mobilePropertySheet.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          });
+          return;
+        }
+
+        hideMobilePropertySheet();
+        infoWindow.setContent(buildInfoWindow(property));
+        infoWindow.open({ map, anchor: property.marker });
+        propertyDetailsSurface = "desktop";
+      }
+
+      function closePropertyDetails({ clearSelection = true } = {}) {
+        infoWindow?.close();
+        hideMobilePropertySheet();
+        propertyDetailsSurface = null;
+        if (clearSelection) {
+          selectedPropertyId = null;
+          clearActiveCard();
+        }
+      }
+
+      function syncPropertyDetailsSurface() {
+        if (!selectedPropertyId) return;
+        const property = visibleProperties.find(item => item.id === selectedPropertyId);
+        if (!property) return;
+        const desiredSurface = isCompactMapView() ? "mobile" : "desktop";
+        if (propertyDetailsSurface !== desiredSurface) showPropertyDetails(property);
+      }
+
+      function openProperty(property, { pan = true, scrollCard = true } = {}) {
+        clusterAnimationId += 1;
+        releaseTravelingClusterMarkers();
+        selectedPropertyId = property.id;
+        showPropertyDetails(property);
+        if (pan && isCompactMapView()) map.panTo({ lat: property.lat, lng: property.lng });
+
+        clearActiveCard();
+        const card = resultsList.querySelector(`[data-property-id="${property.id}"]`);
+        if (card) {
+          card.classList.add("is-active");
+          if (scrollCard && app.dataset.mobileView !== "list") {
+            card.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          }
+        }
+      }
+
+      function createMarker(property) {
+        const meta = STATUS_META[property.status];
+        const pin = new PinClass({
+          background: meta.color,
+          borderColor: meta.border,
+          glyphColor: "#ffffff",
+          scale: property.status === "sold" ? 0.84 : 0.94
+        });
+        const marker = new MarkerClass({
+          position: { lat: property.lat, lng: property.lng },
+          title: `${property.statusLabel}: ${property.title}`,
+          content: pin,
+          gmpClickable: true,
+          zIndex: property.status === "sold" ? 1 : 2
+        });
+        marker.addEventListener("gmp-click", () => openProperty(property));
+        property.marker = marker;
+      }
+
+      function appendSelectOption(select, value, label) {
+        const option = document.createElement("option");
+        option.value = String(value);
+        option.textContent = label;
+        select.appendChild(option);
+      }
+
+      function configurePriceFilters() {
+        const finitePrices = properties.map(property => property.price).filter(Number.isFinite);
+        const highestPrice = finitePrices.length ? Math.max(...finitePrices) : 0;
+        PRICE_STEPS.filter(value => value <= highestPrice).forEach(value => {
+          appendSelectOption(minPriceSelect, value, formatPrice(value));
+          appendSelectOption(maxPriceSelect, value, formatPrice(value));
+        });
+        if (highestPrice > 0 && !PRICE_STEPS.includes(highestPrice)) {
+          const roundedCeiling = Math.ceil(highestPrice / 100000) * 100000;
+          if (![...maxPriceSelect.options].some(option => Number(option.value) === roundedCeiling)) {
+            appendSelectOption(maxPriceSelect, roundedCeiling, formatPrice(roundedCeiling));
+          }
+        }
+      }
+
+      function configureSearchSuggestions() {
+        const suggestionMap = new Map();
+        const addSuggestion = value => {
+          const label = String(value ?? "").trim();
+          const key = normalizeSearchText(label);
+          if (key.length >= 2 && !suggestionMap.has(key)) suggestionMap.set(key, label);
+        };
+
+        properties.forEach(property => {
+          addSuggestion(property.title.split("|")[0]);
+          addSuggestion(property.address);
+          addSuggestion(property.stateName);
+
+          const addressParts = property.address.split(",").map(part => part.trim()).filter(Boolean);
+          if (addressParts.length >= 2) {
+            const city = addressParts[addressParts.length - 2];
+            addSuggestion(property.stateName ? `${city}, ${property.stateName}` : city);
+          }
+
+          const zipCode = property.address.match(/\b\d{5}(?:-\d{4})?\b/)?.[0];
+          addSuggestion(zipCode);
+        });
+
+        const fragment = document.createDocumentFragment();
+        [...suggestionMap.values()]
+          .sort((a, b) => a.localeCompare(b))
+          .forEach(value => {
+            const option = document.createElement("option");
+            option.value = value;
+            fragment.appendChild(option);
+          });
+        searchSuggestions.replaceChildren(fragment);
+      }
+
+      function selectedStatuses() {
+        return new Set(
+          [...document.querySelectorAll("[data-status-filter]:checked")].map(input => input.value)
+        );
+      }
+
+      function filteredInventory() {
+        const statuses = selectedStatuses();
+        const minPrice = Number(minPriceSelect.value);
+        const maxPrice = maxPriceSelect.value === "Infinity" ? Infinity : Number(maxPriceSelect.value);
+        const queryTokens = normalizeSearchText(searchInput.value).split(" ").filter(Boolean);
+
+        return properties.filter(property => {
+          if (!statuses.has(property.status)) return false;
+          if (Number.isFinite(property.price) && (property.price < minPrice || property.price > maxPrice)) return false;
+          if (!Number.isFinite(property.price) && (minPrice > 0 || Number.isFinite(maxPrice))) return false;
+          if (!queryTokens.length) return true;
+          const propertyWords = new Set(property.searchText.split(" "));
+          return queryTokens.every(token => (
+            token.length <= 2
+              ? propertyWords.has(token)
+              : property.searchText.includes(token)
+          ));
+        });
+      }
+
+      function sortProperties(items) {
+        return [...items].sort((a, b) => {
+          const statusDifference = STATUS_META[a.status].rank - STATUS_META[b.status].rank;
+          if (statusDifference) return statusDifference;
+          const aPrice = Number.isFinite(a.price) ? a.price : Infinity;
+          const bPrice = Number.isFinite(b.price) ? b.price : Infinity;
+          return aPrice - bPrice || a.title.localeCompare(b.title);
+        });
+      }
+
+      function renderResults(items, { inView = false } = {}) {
+        resultsList.replaceChildren();
+        resultCount.textContent = `${items.length.toLocaleString()} ${items.length === 1 ? "property" : "properties"}${inView ? " in view" : ""}`;
+
+        if (!items.length) {
+          const empty = createTextElement(
+            "div",
+            "empty-results",
+            inView
+              ? "No matching properties are visible here. Pan or zoom out to see more."
+              : "No properties match these filters. Try a broader search, price range, or status."
+          );
+          resultsList.appendChild(empty);
+          return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        sortProperties(items).forEach(property => {
+          const card = document.createElement("article");
+          card.className = "property-card";
+          card.dataset.propertyId = property.id;
+          if (property.id === selectedPropertyId) card.classList.add("is-active");
+
+          const main = document.createElement("button");
+          main.className = "property-card-main";
+          main.type = "button";
+          main.setAttribute("aria-label", `Show ${property.title} on the map`);
+          main.addEventListener("click", () => {
+            selectedPropertyId = property.id;
+            setMobileView("map");
+            requestAnimationFrame(() => openProperty(property, { scrollCard: false }));
+          });
+
+          main.appendChild(makePropertyImage(property, "property-thumb"));
+          const body = document.createElement("div");
+          body.className = "property-card-body";
+          const topLine = document.createElement("div");
+          topLine.className = "card-topline";
+          topLine.append(createStatusBadge(property), createTextElement("span", "card-price", property.priceLabel || formatPrice(property.price)));
+          body.append(topLine, createTextElement("h3", "", property.title));
+          body.appendChild(createTextElement("p", "card-meta", `${property.acresLabel} acres · ${property.address}`));
+          main.appendChild(body);
+          card.appendChild(main);
+
+          if (property.link) {
+            const link = createTextElement("a", "card-link", "View property ↗");
+            link.href = property.link;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            card.appendChild(link);
+          }
+          fragment.appendChild(card);
+        });
+        resultsList.appendChild(fragment);
+      }
+
+      function buildBounds(items) {
+        const bounds = new google.maps.LatLngBounds();
+        items.forEach(property => bounds.extend({ lat: property.lat, lng: property.lng }));
+        return bounds;
+      }
+
+      function renderViewportResults() {
+        if (!map || !visibleProperties.length) {
+          renderResults(visibleProperties);
+          return;
+        }
+
+        const currentZoom = map.getZoom() ?? 0;
+        const bounds = map.getBounds();
+        if (!bounds || currentZoom <= 4.5) {
+          renderResults(visibleProperties);
+          return;
+        }
+
+        const inView = visibleProperties.filter(property => bounds.contains({ lat: property.lat, lng: property.lng }));
+        renderResults(inView, { inView: true });
+      }
+
+      function scheduleViewportResults() {
+        window.clearTimeout(viewportListTimer);
+        viewportListTimer = window.setTimeout(renderViewportResults, 140);
+      }
+
+      function markerCoordinates(marker) {
+        const position = marker?.position;
+        if (!position) return null;
+        const lat = typeof position.lat === "function" ? position.lat() : Number(position.lat);
+        const lng = typeof position.lng === "function" ? position.lng() : Number(position.lng);
+        return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+      }
+
+      function releaseTravelingClusterMarkers({ render = true } = {}) {
+        if (!travelingClusterMarkers.length || !clusterer) return;
+        const markers = travelingClusterMarkers;
+        travelingClusterMarkers = [];
+        markers.forEach(marker => { marker.map = null; });
+        clusterer.addMarkers(markers, true);
+        if (render) clusterer.render();
+      }
+
+      function showTravelingClusterMarkers(markers, targetMap) {
+        releaseTravelingClusterMarkers();
+        const uniqueMarkers = [...new Set(markers)].filter(Boolean);
+        if (!uniqueMarkers.length) return;
+        clusterer.removeMarkers(uniqueMarkers, true);
+        uniqueMarkers.forEach(marker => { marker.map = targetMap; });
+        travelingClusterMarkers = uniqueMarkers;
+        clusterer.render();
+      }
+
+      function zoomLevelForBounds(bounds, targetMap, padding = 72) {
+        const mapElement = targetMap.getDiv();
+        const availableWidth = Math.max(mapElement.clientWidth - padding * 2, 256);
+        const availableHeight = Math.max(mapElement.clientHeight - padding * 2, 256);
+        const northEast = bounds.getNorthEast();
+        const southWest = bounds.getSouthWest();
+        const clampLatitude = latitude => Math.max(-85.05112878, Math.min(85.05112878, latitude));
+        const worldY = latitude => {
+          const sine = Math.sin(clampLatitude(latitude) * Math.PI / 180);
+          return 0.5 - Math.log((1 + sine) / (1 - sine)) / (4 * Math.PI);
+        };
+        const longitudeFraction = Math.max((northEast.lng() - southWest.lng()) / 360, Number.EPSILON);
+        const latitudeFraction = Math.max(Math.abs(worldY(northEast.lat()) - worldY(southWest.lat())), Number.EPSILON);
+        const longitudeZoom = Math.log2(availableWidth / (256 * longitudeFraction));
+        const latitudeZoom = Math.log2(availableHeight / (256 * latitudeFraction));
+        return Math.max(2, Math.min(16, Math.floor(Math.min(longitudeZoom, latitudeZoom))));
+      }
+
+      function zoomIntoCluster(_event, clickedCluster, targetMap) {
+        const clusterMarkers = [...new Set(clickedCluster?.markers ?? [])];
+        const coordinates = clusterMarkers
+          .map(markerCoordinates)
+          .filter(Boolean);
+        if (!coordinates.length) return;
+
+        const clusterBounds = new google.maps.LatLngBounds();
+        coordinates.forEach(position => clusterBounds.extend(position));
+        const center = clusterBounds.getCenter();
+        const centerLiteral = { lat: center.lat(), lng: center.lng() };
+        const currentZoom = targetMap.getZoom() ?? 3;
+        const boundsZoom = zoomLevelForBounds(clusterBounds, targetMap);
+        const nextZoom = Math.min(Math.max(boundsZoom, Math.floor(currentZoom) + 1), 16);
+        const animationId = ++clusterAnimationId;
+
+        closePropertyDetails();
+        showTravelingClusterMarkers(clusterMarkers, targetMap);
+
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const smootherStep = progress => progress * progress * progress
+          * (progress * (progress * 6 - 15) + 10);
+        const easeInOutSine = progress => -(Math.cos(Math.PI * progress) - 1) / 2;
+        const startingCenter = targetMap.getCenter();
+
+        if (prefersReducedMotion || !startingCenter) {
+          targetMap.moveCamera({ center: centerLiteral, zoom: nextZoom });
+          releaseTravelingClusterMarkers();
+          return;
+        }
+
+        const from = { lat: startingCenter.lat(), lng: startingCenter.lng() };
+        const longitudeDistance = ((centerLiteral.lng - from.lng + 540) % 360) - 180;
+        const averageLatitude = (from.lat + centerLiteral.lat) * Math.PI / 360;
+        const geographicDistance = Math.hypot(
+          centerLiteral.lat - from.lat,
+          longitudeDistance * Math.cos(averageLatitude)
+        );
+        const zoomDistance = Math.abs(nextZoom - currentZoom);
+        const isLargeJump = zoomDistance >= 5;
+        const shouldLeadTravel = geographicDistance >= 6;
+        const cameraDuration = isLargeJump
+          ? Math.min(1900, 850 + zoomDistance * 100)
+          : Math.min(
+              shouldLeadTravel ? 850 : 700,
+              (shouldLeadTravel ? 500 : 420) + zoomDistance * 60 + geographicDistance * 3
+            );
+        let cameraStartTime;
+        let lastCameraFrame = -Infinity;
+        const animateCamera = timestamp => {
+          if (animationId !== clusterAnimationId) return;
+          cameraStartTime ??= timestamp;
+          const progress = Math.min((timestamp - cameraStartTime) / cameraDuration, 1);
+          if (progress === 1 || timestamp - lastCameraFrame >= CAMERA_FRAME_INTERVAL) {
+            const zoomStart = shouldLeadTravel ? (isLargeJump ? 0.16 : 0.24) : 0;
+            const zoomTimeline = Math.max(0, Math.min(1, (progress - zoomStart) / (1 - zoomStart)));
+            const zoomProgress = isLargeJump ? easeInOutSine(zoomTimeline) : smootherStep(zoomTimeline);
+            const centerProgress = shouldLeadTravel
+              ? smootherStep(Math.min(progress / (isLargeJump ? 0.56 : 0.5), 1))
+              : 1 - Math.pow(1 - zoomProgress, isLargeJump ? 2.5 : 3);
+            targetMap.moveCamera({
+              center: {
+                lat: from.lat + (centerLiteral.lat - from.lat) * centerProgress,
+                lng: from.lng + longitudeDistance * centerProgress
+              },
+              zoom: currentZoom + (nextZoom - currentZoom) * zoomProgress
+            });
+            lastCameraFrame = timestamp;
+          }
+          if (progress < 1) {
+            window.requestAnimationFrame(animateCamera);
+          } else {
+            targetMap.moveCamera({ center: centerLiteral, zoom: nextZoom });
+            releaseTravelingClusterMarkers();
+            scheduleViewportResults();
+          }
+        };
+        window.requestAnimationFrame(animateCamera);
+      }
+
+      function fitVisibleProperties() {
+        if (!map || !visibleProperties.length || app.dataset.mobileView === "list") return;
+        lastVisibleBounds = buildBounds(visibleProperties);
+        map.fitBounds(lastVisibleBounds, { top: 62, right: 62, bottom: 62, left: 62 });
+        google.maps.event.addListenerOnce(map, "idle", () => {
+          if (map.getZoom() > 11) map.setZoom(11);
+        });
+      }
+
+      function showState(type, title, message) {
+        mapState.hidden = false;
+        stateSpinner.hidden = type !== "loading";
+        retryButton.hidden = type !== "error";
+        stateTitle.textContent = title;
+        stateMessage.textContent = message;
+      }
+
+      function hideState() {
+        mapState.hidden = true;
+      }
+
+      function refreshInventory({ fit = true } = {}) {
+        if (!clusterer) return;
+        clusterAnimationId += 1;
+        releaseTravelingClusterMarkers({ render: false });
+        const min = Number(minPriceSelect.value);
+        const max = maxPriceSelect.value === "Infinity" ? Infinity : Number(maxPriceSelect.value);
+        if (min > max) {
+          if (document.activeElement === minPriceSelect) maxPriceSelect.value = minPriceSelect.value;
+          else minPriceSelect.value = maxPriceSelect.value;
+        }
+
+        visibleProperties = filteredInventory();
+        clusterer.clearMarkers();
+        clusterer.addMarkers(visibleProperties.map(property => property.marker));
+        renderResults(visibleProperties);
+
+        if (selectedPropertyId && !visibleProperties.some(property => property.id === selectedPropertyId)) {
+          closePropertyDetails();
+        }
+
+        if (!visibleProperties.length) {
+          showState("empty", "No matching properties", "Adjust the filters or search to bring properties back into view.");
+        } else {
+          hideState();
+          if (fit) fitVisibleProperties();
+        }
+      }
+
+      function setMobileView(view) {
+        const isMobile = window.matchMedia("(max-width: 820px)").matches;
+        if (isMobile && view === "list" && map) {
+          const center = map.getCenter();
+          const zoom = map.getZoom();
+          if (center && Number.isFinite(zoom)) {
+            savedMobileCamera = {
+              center: { lat: center.lat(), lng: center.lng() },
+              zoom
+            };
+          }
+        }
+
+        app.dataset.mobileView = view;
+        const mapSelected = view === "map";
+        mapTab.setAttribute("aria-selected", String(mapSelected));
+        listTab.setAttribute("aria-selected", String(!mapSelected));
+        document.getElementById("map-panel").hidden = !mapSelected && isMobile;
+        document.getElementById("results-panel").hidden = mapSelected && isMobile;
+        if (mapSelected && map) {
+          requestAnimationFrame(() => {
+            google.maps.event.trigger(map, "resize");
+            if (savedMobileCamera) map.moveCamera(savedMobileCamera);
+            clusterer?.render();
+          });
+        }
+      }
+
+      function syncResponsivePanels() {
+        const isMobile = window.matchMedia("(max-width: 820px)").matches;
+        document.getElementById("map-panel").hidden = isMobile && app.dataset.mobileView !== "map";
+        document.getElementById("results-panel").hidden = isMobile && app.dataset.mobileView !== "list";
+        if (!isMobile) {
+          document.getElementById("map-panel").hidden = false;
+          document.getElementById("results-panel").hidden = false;
+          if (map) google.maps.event.trigger(map, "resize");
+        }
+        syncPropertyDetailsSurface();
+      }
+
+      function redrawMapAfterTabReturn() {
+        if (!map || document.hidden) return;
+        const mapPanel = document.getElementById("map-panel");
+        if (mapPanel.hidden || mapPanel.getClientRects().length === 0) return;
+
+        google.maps.event.trigger(map, "resize");
+        const center = map.getCenter();
+        const zoom = map.getZoom();
+        if (center && Number.isFinite(zoom)) {
+          map.moveCamera({
+            center: { lat: center.lat(), lng: center.lng() },
+            zoom
+          });
+        }
+        clusterer?.render();
+      }
+
+      function wakeMapAfterTabReturn() {
+        if (document.hidden) return;
+        requestAnimationFrame(redrawMapAfterTabReturn);
+        window.clearTimeout(mapWakeTimer);
+        mapWakeTimer = window.setTimeout(redrawMapAfterTabReturn, 220);
+      }
+
+      function wireControls() {
+        let searchTimer;
+        searchInput.addEventListener("input", () => {
+          window.clearTimeout(searchTimer);
+          searchTimer = window.setTimeout(() => refreshInventory(), 160);
+        });
+        document.querySelectorAll("[data-status-filter]").forEach(input => input.addEventListener("change", () => refreshInventory()));
+        minPriceSelect.addEventListener("change", () => refreshInventory());
+        maxPriceSelect.addEventListener("change", () => refreshInventory());
+        resetButton.addEventListener("click", () => {
+          const resetScrollPosition = { left: window.scrollX, top: window.scrollY };
+          searchInput.value = "";
+          minPriceSelect.value = "0";
+          maxPriceSelect.value = "Infinity";
+          document.querySelector('[data-status-filter][value="available"]').checked = true;
+          document.querySelector('[data-status-filter][value="pending"]').checked = true;
+          document.querySelector('[data-status-filter][value="sold"]').checked = false;
+          refreshInventory();
+          requestAnimationFrame(() => window.scrollTo(resetScrollPosition.left, resetScrollPosition.top));
+          window.setTimeout(() => window.scrollTo(resetScrollPosition.left, resetScrollPosition.top), 350);
+        });
+        retryButton.addEventListener("click", () => window.location.reload());
+        mapTab.addEventListener("click", () => setMobileView("map"));
+        listTab.addEventListener("click", () => setMobileView("list"));
+        mobilePropertyClose.addEventListener("click", () => closePropertyDetails());
+        window.addEventListener("resize", syncResponsivePanels, { passive: true });
+        document.addEventListener("visibilitychange", wakeMapAfterTabReturn, { passive: true });
+        window.addEventListener("pageshow", wakeMapAfterTabReturn, { passive: true });
+        window.addEventListener("focus", wakeMapAfterTabReturn, { passive: true });
+      }
+
+      window.initMap = async function initMap() {
+        try {
+          if (window.location.protocol === "file:") {
+            resultCount.textContent = "Preview required";
+            resultsList.replaceChildren(createTextElement("div", "empty-results", "Use the preview launcher included with this map."));
+            showState(
+              "error",
+              "Use the preview launcher",
+              "Google Maps cannot load when this HTML file is opened directly. Double-click Preview Property Map.command and use the browser window it opens."
+            );
+            return;
+          }
+
+          if (!window.markerClusterer?.MarkerClusterer) {
+            throw new Error("The marker clustering library did not load.");
+          }
+
+          map = new google.maps.Map(document.getElementById("map"), {
+            center: { lat: 38.5, lng: -98.5 },
+            zoom: 4,
+            minZoom: 2,
+            mapId: MAP_ID,
+            renderingType: google.maps.RenderingType.VECTOR,
+            isFractionalZoomEnabled: true,
+            backgroundColor: "#edf5f0",
+            streetViewControl: false,
+            mapTypeControl: true,
+            mapTypeControlOptions: {
+              style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+              position: google.maps.ControlPosition.TOP_LEFT
+            },
+            fullscreenControl: true,
+            clickableIcons: false
+          });
+          google.maps.event.addListenerOnce(map, "tilesloaded", () => {
+            app.dataset.mapRenderingType = String(map.getRenderingType() ?? "unknown").toLowerCase();
+          });
+
+          infoWindow = new google.maps.InfoWindow({
+            maxWidth: 340
+          });
+          const markerLibrary = await google.maps.importLibrary("marker");
+          MarkerClass = markerLibrary.AdvancedMarkerElement;
+          PinClass = markerLibrary.PinElement;
+
+          const sheetResults = await Promise.allSettled(SHEETS.map(fetchSheetRows));
+          const fulfilledRows = sheetResults
+            .filter(result => result.status === "fulfilled")
+            .flatMap(result => result.value);
+          if (!fulfilledRows.length) {
+            const reason = sheetResults.find(result => result.status === "rejected")?.reason;
+            throw reason instanceof Error ? reason : new Error("No inventory source could be loaded.");
+          }
+
+          properties = deduplicateProperties(fulfilledRows.map(rowToProperty).filter(Boolean));
+          if (!properties.length) throw new Error("No properties with valid statuses and coordinates were found.");
+
+          properties.forEach(createMarker);
+          configurePriceFilters();
+          configureSearchSuggestions();
+          clusterer = new window.markerClusterer.MarkerClusterer({
+            map,
+            markers: [],
+            onClusterClick: zoomIntoCluster
+          });
+          map.addListener("idle", scheduleViewportResults);
+          wireControls();
+          syncResponsivePanels();
+          refreshInventory();
+        } catch (error) {
+          console.error("Property map initialization failed:", error);
+          resultCount.textContent = "Unavailable";
+          resultsList.replaceChildren(createTextElement("div", "empty-results", "The live inventory could not be loaded."));
+          showState("error", "We couldn’t load the map", "Please check your connection and try again.");
+        }
+      };
+
+      window.handleMapLoadError = function handleMapLoadError() {
+        resultCount.textContent = "Unavailable";
+        if (window.location.protocol === "file:") {
+          showState(
+            "error",
+            "Use the preview launcher",
+            "Google Maps cannot load when this HTML file is opened directly. Double-click Preview Property Map.command and use the browser window it opens."
+          );
+          return;
+        }
+        showState("error", "We couldn’t load the map", "The map service did not respond. Please try again.");
+      };
+    })();
+  </script>
+
+  <!-- Keep this browser key restricted to approved website referrers and the Maps JavaScript API. -->
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDyS-QF9IzB_PXNsdXh1H6Ss0Vf-mM0eGI&loading=async&callback=initMap&libraries=marker&v=weekly"
+    onerror="handleMapLoadError()">
+  </script>
 </body>
 </html>
