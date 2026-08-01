@@ -515,9 +515,9 @@
     .mobile-property-sheet {
       position: absolute;
       z-index: 10;
-      right: 12px;
-      bottom: 12px;
-      left: 12px;
+      bottom: 38px;
+      left: 50%;
+      width: min(720px, calc(100% - 32px));
       max-height: min(38%, 240px);
       overflow: auto;
       border: 1px solid rgba(219, 228, 222, 0.96);
@@ -526,6 +526,7 @@
       padding: 12px 48px 12px 12px;
       box-shadow: 0 18px 45px rgba(20, 53, 35, 0.24);
       overscroll-behavior: contain;
+      transform: translateX(-50%);
       -webkit-overflow-scrolling: touch;
     }
 
@@ -660,6 +661,13 @@
       .app[data-mobile-view="map"] .results-panel { display: none; }
       .app[data-mobile-view="list"] .map-panel { display: none; }
       .results-list { padding: 12px; }
+      .mobile-property-sheet {
+        right: 12px;
+        bottom: 12px;
+        left: 12px;
+        width: auto;
+        transform: none;
+      }
     }
 
     @media (max-width: 480px) {
@@ -675,7 +683,9 @@
         right: 8px;
         bottom: max(8px, env(safe-area-inset-bottom));
         left: 8px;
+        width: auto;
         max-height: min(38%, 220px);
+        transform: none;
       }
       .mobile-property-preview { grid-template-columns: minmax(0, 1fr); }
       .mobile-property-photo { display: none; }
@@ -749,7 +759,7 @@
     <section class="map-shell">
       <section class="map-panel" id="map-panel" role="tabpanel" aria-labelledby="map-tab">
         <div id="map" role="region" aria-label="Interactive property map"></div>
-        <section class="mobile-property-sheet" id="mobile-property-sheet" aria-label="Selected property details" hidden>
+        <section class="mobile-property-sheet" id="mobile-property-sheet" aria-label="Selected property preview" hidden>
           <button class="mobile-property-close" id="mobile-property-close" type="button" aria-label="Close property details">&times;</button>
           <div id="mobile-property-content"></div>
         </section>
@@ -1129,16 +1139,10 @@
       }
 
       function showPropertyDetails(property) {
-        if (isCompactMapView()) {
-          mobilePropertyContent.replaceChildren(buildMobilePropertyPreview(property));
-          mobilePropertySheet.hidden = false;
-          mobilePropertySheet.scrollTop = 0;
-          propertyDetailsSurface = "mobile";
-          return;
-        }
-
-        hideMobilePropertySheet();
-        propertyDetailsSurface = "list";
+        mobilePropertyContent.replaceChildren(buildMobilePropertyPreview(property));
+        mobilePropertySheet.hidden = false;
+        mobilePropertySheet.scrollTop = 0;
+        propertyDetailsSurface = "preview";
       }
 
       function closePropertyDetails({ clearSelection = true } = {}) {
@@ -1154,8 +1158,7 @@
         if (!selectedPropertyId) return;
         const property = visibleProperties.find(item => item.id === selectedPropertyId);
         if (!property) return;
-        const desiredSurface = isCompactMapView() ? "mobile" : "list";
-        if (propertyDetailsSurface !== desiredSurface) showPropertyDetails(property);
+        if (propertyDetailsSurface !== "preview") showPropertyDetails(property);
       }
 
       function openProperty(property, { pan = true, scrollCard = true } = {}) {
