@@ -330,12 +330,17 @@
     }
 
     .results-header {
+      display: grid;
+      gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .results-heading-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      padding: 15px 16px;
-      border-bottom: 1px solid var(--line);
     }
 
     .results-header h2 {
@@ -348,6 +353,39 @@
       font-size: 12px;
       font-weight: 800;
       text-align: right;
+    }
+
+    .result-sort {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      gap: 9px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .result-sort select {
+      width: 100%;
+      min-height: 34px;
+      border: 1px solid #c9d4cc;
+      border-radius: 9px;
+      background: #fff;
+      color: var(--ink);
+      outline: none;
+      padding: 6px 9px;
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: normal;
+      text-transform: none;
+    }
+
+    .result-sort select:focus {
+      border-color: var(--brand);
+      outline: 3px solid rgba(30, 109, 69, 0.2);
+      outline-offset: 1px;
     }
 
     .results-list {
@@ -637,9 +675,11 @@
 
     @media (max-width: 1120px) {
       .toolbar {
-        grid-template-columns: minmax(220px, 1fr) auto minmax(150px, 0.55fr) minmax(150px, 0.55fr);
+        grid-template-columns: repeat(4, minmax(0, 1fr));
       }
-      .reset-button { grid-column: 4; }
+      .search-field { grid-column: 1 / 3; }
+      .status-group { grid-column: 3 / 5; }
+      .reset-button { grid-column: 3 / 5; }
       .map-shell { grid-template-columns: minmax(0, 1fr) 340px; }
     }
 
@@ -715,7 +755,7 @@
     <section class="toolbar" aria-label="Property filters">
       <label class="field search-field" for="property-search">
         Search
-        <input id="property-search" type="search" placeholder="County, state, city, ZIP, address…" autocomplete="off" list="property-search-suggestions">
+        <input id="property-search" type="search" placeholder="Search by State / County / City / ZIP or Address" autocomplete="off" list="property-search-suggestions">
         <datalist id="property-search-suggestions"></datalist>
       </label>
 
@@ -775,8 +815,19 @@
 
       <aside class="results-panel" id="results-panel" role="tabpanel" aria-labelledby="list-tab">
         <div class="results-header">
-          <h2>Properties</h2>
-          <div class="result-count" id="result-count" aria-live="polite">Loading…</div>
+          <div class="results-heading-row">
+            <h2>Properties</h2>
+            <div class="result-count" id="result-count" aria-live="polite">Loading…</div>
+          </div>
+          <label class="result-sort" for="property-sort">
+            <span>Sort</span>
+            <select id="property-sort">
+              <option value="price-asc">Price: low to high</option>
+              <option value="price-desc">Price: high to low</option>
+              <option value="acres-asc">Acreage: small to large</option>
+              <option value="acres-desc">Acreage: large to small</option>
+            </select>
+          </label>
         </div>
         <div class="results-list" id="results-list"></div>
       </aside>
@@ -839,6 +890,7 @@
       const resetButton = document.getElementById("reset-filters");
       const resultsList = document.getElementById("results-list");
       const resultCount = document.getElementById("result-count");
+      const sortSelect = document.getElementById("property-sort");
       const mapState = document.getElementById("map-state");
       const stateSpinner = document.getElementById("state-spinner");
       const stateTitle = document.getElementById("state-title");
@@ -1225,7 +1277,9 @@
 
         properties.forEach(property => {
           addSuggestion(property.title.split("|")[0]);
-          addSuggestion(property.address);
+          // Keep ZIP codes searchable through property.searchText, but do not
+          // surface them in the autocomplete menu.
+          addSuggestion(property.address.replace(/\s+\d{5}(?:-\d{4})?\s*$/, ""));
           addSuggestion(property.stateName);
 
           const addressParts = property.address.split(",").map(part => part.trim()).filter(Boolean);
@@ -1234,8 +1288,6 @@
             addSuggestion(property.stateName ? `${city}, ${property.stateName}` : city);
           }
 
-          const zipCode = property.address.match(/\b\d{5}(?:-\d{4})?\b/)?.[0];
-          addSuggestion(zipCode);
         });
 
         const fragment = document.createDocumentFragment();
@@ -1276,12 +1328,20 @@
       }
 
       function sortProperties(items) {
+        const mode = sortSelect.value;
+        const field = mode.startsWith("acres") ? "acres" : "price";
+        const direction = mode.endsWith("desc") ? -1 : 1;
+
         return [...items].sort((a, b) => {
+          const aValue = a[field];
+          const bValue = b[field];
+          const aHasValue = Number.isFinite(aValue);
+          const bHasValue = Number.isFinite(bValue);
+          if (aHasValue !== bHasValue) return aHasValue ? -1 : 1;
+          if (aHasValue && bHasValue && aValue !== bValue) return (aValue - bValue) * direction;
           const statusDifference = STATUS_META[a.status].rank - STATUS_META[b.status].rank;
           if (statusDifference) return statusDifference;
-          const aPrice = Number.isFinite(a.price) ? a.price : Infinity;
-          const bPrice = Number.isFinite(b.price) ? b.price : Infinity;
-          return aPrice - bPrice || a.title.localeCompare(b.title);
+          return a.title.localeCompare(b.title);
         });
       }
 
@@ -1686,6 +1746,7 @@
         document.querySelectorAll("[data-status-filter]").forEach(input => input.addEventListener("change", () => refreshInventory()));
         minPriceSelect.addEventListener("change", () => refreshInventory());
         maxPriceSelect.addEventListener("change", () => refreshInventory());
+        sortSelect.addEventListener("change", renderViewportResults);
         resetButton.addEventListener("click", () => {
           const resetScrollPosition = { left: window.scrollX, top: window.scrollY };
           searchInput.value = "";
