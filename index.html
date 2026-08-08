@@ -467,8 +467,8 @@
     .property-thumb img.is-fallback,
     .mobile-property-photo img.is-fallback {
       background: #e5eee8;
-      object-fit: cover;
-      object-position: left center;
+      object-fit: contain;
+      object-position: center center;
     }
 
     .property-thumb-fallback {
@@ -872,7 +872,11 @@
         }
       ];
 
-      const ACRETOWN_LOGO_URL = "https://lh3.googleusercontent.com/d/1RnaNhtDT2JqWGvaxTRu9uUfNoFQ4mBIo=s1600";
+      const ACRETOWN_LOGO_URL = "https://lh3.googleusercontent.com/d/1ASYJW5vRWWqGBN6LlmMvIF9hm6YdKVBd=s1600";
+      const LEGACY_ACRETOWN_LOGO_URLS = [
+        "https://lh3.googleusercontent.com/d/1RnaNhtDT2JqWGvaxTRu9uUfNoFQ4mBIo=s1600",
+        "https://image-cdn.carrot.com/uploads/sites/41654/2021/02/acretown-logo-cheap-rural-land.png"
+      ];
       const NON_PROPERTY_PHOTO_PATTERN = /(?:youtube|youtu\.be|ytimg|value[-_+ ]?(?:assurance|calculator)|zillow|google[-_+ ]?(?:maps|earth)|regional[-_+ ]?map|plat[-_+ ]?map|mapright|headline[-_+ ]|prop[-_+ ]?summary|make[-_+ ]?an[-_+ ]?offer|interactive[-_+ ]?map|drone[-_+ ]?video|sell[-_+ ]?land|we[-_+ ]?buy[-_+ ]?land|landthink|buffalo[-_+ ]?nickel|facebook|instagram|logo|subheader|icon|placeholder|spinner|loading|client\+16x9[_+]acre\+town|5af45846-a24f-415c-95b7-126e03a1a9fd)/i;
 
       // Replace DEMO_MAP_ID with a production Map ID from the same Google Cloud project.
@@ -978,6 +982,7 @@
       function mainPropertyPhotoUrl(value) {
         const url = safeHttpUrl(value);
         if (!url) return "";
+        if (url === ACRETOWN_LOGO_URL || LEGACY_ACRETOWN_LOGO_URLS.includes(url)) return "";
         let searchableUrl = url;
         try { searchableUrl = decodeURIComponent(url); } catch (_) {}
         return NON_PROPERTY_PHOTO_PATTERN.test(searchableUrl) ? "" : url;
@@ -1162,8 +1167,8 @@
           image.src = ACRETOWN_LOGO_URL;
         };
 
-        image.src = property.photo || ACRETOWN_LOGO_URL;
-        image.alt = property.photo ? `Featured view of ${property.title}` : "AcreTown logo";
+        image.src = isFallbackImage ? ACRETOWN_LOGO_URL : property.photo;
+        image.alt = isFallbackImage ? "AcreTown logo" : `Featured view of ${property.title}`;
         image.loading = "lazy";
         image.decoding = "async";
         if (isFallbackImage) image.classList.add("is-fallback");
