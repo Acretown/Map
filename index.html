@@ -98,7 +98,7 @@
 
     .toolbar {
       display: grid;
-      grid-template-columns: minmax(210px, 1.25fr) auto minmax(150px, 0.55fr) minmax(150px, 0.55fr) auto;
+      grid-template-columns: minmax(210px, 1.25fr) auto repeat(3, minmax(135px, 0.55fr)) auto;
       align-items: end;
       gap: 12px;
       padding: 14px;
@@ -673,13 +673,13 @@
       }
     }
 
-    @media (max-width: 1120px) {
+    @media (max-width: 1280px) {
       .toolbar {
         grid-template-columns: repeat(4, minmax(0, 1fr));
       }
       .search-field { grid-column: 1 / 3; }
       .status-group { grid-column: 3 / 5; }
-      .reset-button { grid-column: 3 / 5; }
+      .reset-button { grid-column: 4; }
       .map-shell { grid-template-columns: minmax(0, 1fr) 340px; }
     }
 
@@ -690,6 +690,7 @@
       .toolbar { grid-template-columns: 1fr 1fr; }
       .search-field, .status-group { grid-column: 1 / -1; }
       .status-group { min-width: 0; }
+      .acreage-field { grid-column: 1 / -1; }
       .reset-button { grid-column: 1 / -1; }
       .mobile-tabs { display: flex; }
       .map-shell {
@@ -747,7 +748,7 @@
       <div>
         <p class="eyebrow">AcreTown Properties</p>
         <h1>Find your piece of land</h1>
-        <p class="intro-copy">Search live inventory, narrow it by status or price, and select any property for details.</p>
+        <p class="intro-copy">Search live inventory, narrow it by status, price, or acreage, and select any property for details.</p>
       </div>
       <div class="inventory-note">Live inventory</div>
     </header>
@@ -772,7 +773,7 @@
           Pending
         </label>
         <label class="status-toggle">
-          <input type="checkbox" value="sold" data-status-filter>
+          <input type="checkbox" value="sold" data-status-filter checked>
           <span class="status-dot sold" aria-hidden="true"></span>
           Sold
         </label>
@@ -786,6 +787,19 @@
       <label class="field" for="price-max">
         Maximum price
         <select id="price-max"><option value="Infinity">No maximum</option></select>
+      </label>
+
+      <label class="field acreage-field" for="acreage-range">
+        Acreage
+        <select id="acreage-range">
+          <option value="any">Any acreage</option>
+          <option value="0-1">Under 1 acre</option>
+          <option value="1-5">1–5 acres</option>
+          <option value="5-10">5–10 acres</option>
+          <option value="10-20">10–20 acres</option>
+          <option value="20-50">20–50 acres</option>
+          <option value="50-Infinity">50+ acres</option>
+        </select>
       </label>
 
       <button class="reset-button" id="reset-filters" type="button">Reset filters</button>
@@ -887,6 +901,7 @@
       const searchSuggestions = document.getElementById("property-search-suggestions");
       const minPriceSelect = document.getElementById("price-min");
       const maxPriceSelect = document.getElementById("price-max");
+      const acreageSelect = document.getElementById("acreage-range");
       const resetButton = document.getElementById("reset-filters");
       const resultsList = document.getElementById("results-list");
       const resultCount = document.getElementById("result-count");
@@ -1311,12 +1326,20 @@
         const statuses = selectedStatuses();
         const minPrice = Number(minPriceSelect.value);
         const maxPrice = maxPriceSelect.value === "Infinity" ? Infinity : Number(maxPriceSelect.value);
+        const acreageRange = acreageSelect.value === "any"
+          ? null
+          : acreageSelect.value.split("-").map(value => value === "Infinity" ? Infinity : Number(value));
         const queryTokens = normalizeSearchText(searchInput.value).split(" ").filter(Boolean);
 
         return properties.filter(property => {
           if (!statuses.has(property.status)) return false;
           if (Number.isFinite(property.price) && (property.price < minPrice || property.price > maxPrice)) return false;
           if (!Number.isFinite(property.price) && (minPrice > 0 || Number.isFinite(maxPrice))) return false;
+          if (acreageRange) {
+            if (!Number.isFinite(property.acres)) return false;
+            const [minimumAcres, maximumAcres] = acreageRange;
+            if (property.acres < minimumAcres || property.acres >= maximumAcres) return false;
+          }
           if (!queryTokens.length) return true;
           const propertyWords = new Set(property.searchText.split(" "));
           return queryTokens.every(token => (
@@ -1355,7 +1378,7 @@
             "empty-results",
             inView
               ? "No matching properties are visible here. Pan or zoom out to see more."
-              : "No properties match these filters. Try a broader search, price range, or status."
+              : "No properties match these filters. Try a broader search, price range, acreage, or status."
           );
           resultsList.appendChild(empty);
           return;
@@ -1746,15 +1769,17 @@
         document.querySelectorAll("[data-status-filter]").forEach(input => input.addEventListener("change", () => refreshInventory()));
         minPriceSelect.addEventListener("change", () => refreshInventory());
         maxPriceSelect.addEventListener("change", () => refreshInventory());
+        acreageSelect.addEventListener("change", () => refreshInventory());
         sortSelect.addEventListener("change", renderViewportResults);
         resetButton.addEventListener("click", () => {
           const resetScrollPosition = { left: window.scrollX, top: window.scrollY };
           searchInput.value = "";
           minPriceSelect.value = "0";
           maxPriceSelect.value = "Infinity";
+          acreageSelect.value = "any";
           document.querySelector('[data-status-filter][value="available"]').checked = true;
           document.querySelector('[data-status-filter][value="pending"]').checked = true;
-          document.querySelector('[data-status-filter][value="sold"]').checked = false;
+          document.querySelector('[data-status-filter][value="sold"]').checked = true;
           refreshInventory();
           requestAnimationFrame(() => window.scrollTo(resetScrollPosition.left, resetScrollPosition.top));
           window.setTimeout(() => window.scrollTo(resetScrollPosition.left, resetScrollPosition.top), 350);
