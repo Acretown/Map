@@ -469,6 +469,7 @@
       background: #e5eee8;
       object-fit: contain;
       object-position: center center;
+      padding: 9px;
     }
 
     .property-thumb-fallback {
@@ -843,6 +844,7 @@
           <label class="result-sort" for="property-sort">
             <span>Sort</span>
             <select id="property-sort">
+              <option value="status">Available first</option>
               <option value="price-asc">Price: low to high</option>
               <option value="price-desc">Price: high to low</option>
               <option value="acres-asc">Acreage: small to large</option>
@@ -1385,6 +1387,18 @@
 
       function sortProperties(items) {
         const mode = sortSelect.value;
+        if (mode === "status") {
+          return [...items].sort((a, b) => {
+            const statusDifference = STATUS_META[a.status].rank - STATUS_META[b.status].rank;
+            if (statusDifference) return statusDifference;
+            const aHasPrice = Number.isFinite(a.price);
+            const bHasPrice = Number.isFinite(b.price);
+            if (aHasPrice !== bHasPrice) return aHasPrice ? -1 : 1;
+            if (aHasPrice && bHasPrice && a.price !== b.price) return a.price - b.price;
+            return a.title.localeCompare(b.title);
+          });
+        }
+
         const field = mode.startsWith("acres") ? "acres" : "price";
         const direction = mode.endsWith("desc") ? -1 : 1;
 
@@ -1810,6 +1824,7 @@
           minPriceSelect.value = "0";
           maxPriceSelect.value = "Infinity";
           acreageSelect.value = "any";
+          sortSelect.value = "status";
           document.querySelector('[data-status-filter][value="available"]').checked = true;
           document.querySelector('[data-status-filter][value="pending"]').checked = true;
           document.querySelector('[data-status-filter][value="sold"]').checked = true;
