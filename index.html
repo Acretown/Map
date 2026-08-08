@@ -844,7 +844,7 @@
           <label class="result-sort" for="property-sort">
             <span>Sort</span>
             <select id="property-sort">
-              <option value="status">Available first</option>
+              <option value="latest">Latest properties</option>
               <option value="price-asc">Price: low to high</option>
               <option value="price-desc">Price: high to low</option>
               <option value="acres-asc">Acreage: small to large</option>
@@ -1097,6 +1097,8 @@
         const acresLabel = decodeEntities(cellValue(row, 4, true)) || (Number.isFinite(numericAcres) ? String(numericAcres) : "Not listed");
         const stateCode = extractStateCode(address, title);
         const stateName = STATE_NAMES[stateCode] ?? "";
+        const latestDate = decodeEntities(cellValue(row, 9, true) || cellValue(row, 9)).trim();
+        const latestTimestamp = Date.parse(latestDate);
 
         return {
           id: `property-${index}`,
@@ -1108,6 +1110,9 @@
           address: address || "Address unavailable",
           acres: Number.isFinite(numericAcres) ? numericAcres : null,
           acresLabel,
+          latestDate,
+          latestTimestamp: Number.isFinite(latestTimestamp) ? latestTimestamp : null,
+          sourceIndex: index,
           stateCode,
           stateName,
           searchText: normalizeSearchText(`${title} ${address} ${STATUS_META[status].label} ${acresLabel} ${stateCode} ${stateName}`),
@@ -1387,15 +1392,15 @@
 
       function sortProperties(items) {
         const mode = sortSelect.value;
-        if (mode === "status") {
+        if (mode === "latest") {
           return [...items].sort((a, b) => {
-            const statusDifference = STATUS_META[a.status].rank - STATUS_META[b.status].rank;
-            if (statusDifference) return statusDifference;
-            const aHasPrice = Number.isFinite(a.price);
-            const bHasPrice = Number.isFinite(b.price);
-            if (aHasPrice !== bHasPrice) return aHasPrice ? -1 : 1;
-            if (aHasPrice && bHasPrice && a.price !== b.price) return a.price - b.price;
-            return a.title.localeCompare(b.title);
+            const aHasDate = Number.isFinite(a.latestTimestamp);
+            const bHasDate = Number.isFinite(b.latestTimestamp);
+            if (aHasDate !== bHasDate) return aHasDate ? -1 : 1;
+            if (aHasDate && bHasDate && a.latestTimestamp !== b.latestTimestamp) {
+              return b.latestTimestamp - a.latestTimestamp;
+            }
+            return a.sourceIndex - b.sourceIndex;
           });
         }
 
@@ -1824,7 +1829,7 @@
           minPriceSelect.value = "0";
           maxPriceSelect.value = "Infinity";
           acreageSelect.value = "any";
-          sortSelect.value = "status";
+          sortSelect.value = "latest";
           document.querySelector('[data-status-filter][value="available"]').checked = true;
           document.querySelector('[data-status-filter][value="pending"]').checked = true;
           document.querySelector('[data-status-filter][value="sold"]').checked = true;
