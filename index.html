@@ -464,6 +464,13 @@
       object-fit: cover;
     }
 
+    .property-thumb img.is-fallback,
+    .mobile-property-photo img.is-fallback {
+      background: #e5eee8;
+      object-fit: cover;
+      object-position: left center;
+    }
+
     .property-thumb-fallback {
       position: absolute;
       inset: 0;
@@ -865,6 +872,9 @@
         }
       ];
 
+      const ACRETOWN_LOGO_URL = "https://image-cdn.carrot.com/uploads/sites/41654/2021/02/acretown-logo-cheap-rural-land.png";
+      const NON_PROPERTY_PHOTO_PATTERN = /(?:youtube|youtu\.be|ytimg|value[-_+ ]?(?:assurance|calculator)|zillow|google[-_+ ]?(?:maps|earth)|regional[-_+ ]?map|plat[-_+ ]?map|mapright|headline[-_+ ]|prop[-_+ ]?summary|make[-_+ ]?an[-_+ ]?offer|interactive[-_+ ]?map|drone[-_+ ]?video|sell[-_+ ]?land|we[-_+ ]?buy[-_+ ]?land|landthink|buffalo[-_+ ]?nickel|facebook|instagram|logo|subheader|icon|placeholder|spinner|loading|client\+16x9[_+]acre\+town|5af45846-a24f-415c-95b7-126e03a1a9fd)/i;
+
       // Replace DEMO_MAP_ID with a production Map ID from the same Google Cloud project.
       const MAP_ID = "DEMO_MAP_ID";
       const PRICE_STEPS = [
@@ -963,6 +973,14 @@
         } catch {
           return null;
         }
+      }
+
+      function mainPropertyPhotoUrl(value) {
+        const url = safeHttpUrl(value);
+        if (!url) return "";
+        let searchableUrl = url;
+        try { searchableUrl = decodeURIComponent(url); } catch (_) {}
+        return NON_PROPERTY_PHOTO_PATTERN.test(searchableUrl) ? "" : url;
       }
 
       function formatPrice(value) {
@@ -1089,7 +1107,7 @@
           lat,
           lng,
           link,
-          photo: safeHttpUrl(cellValue(row, 8)),
+          photo: mainPropertyPhotoUrl(cellValue(row, 8)),
           marker: null
         };
       }
@@ -1130,16 +1148,28 @@
         wrapper.className = className;
         const fallback = createTextElement("span", "property-thumb-fallback", "AcreTown");
         wrapper.appendChild(fallback);
-        if (property.photo) {
-          const image = document.createElement("img");
-          image.src = property.photo;
-          image.alt = `Featured view of ${property.title}`;
-          image.loading = "lazy";
-          image.decoding = "async";
-          image.addEventListener("load", () => fallback.remove(), { once: true });
-          image.addEventListener("error", () => image.remove(), { once: true });
-          wrapper.appendChild(image);
-        }
+        const image = document.createElement("img");
+        let isFallbackImage = !property.photo;
+
+        const useFallbackImage = () => {
+          if (isFallbackImage) {
+            image.remove();
+            return;
+          }
+          isFallbackImage = true;
+          image.classList.add("is-fallback");
+          image.alt = "AcreTown logo";
+          image.src = ACRETOWN_LOGO_URL;
+        };
+
+        image.src = property.photo || ACRETOWN_LOGO_URL;
+        image.alt = property.photo ? `Featured view of ${property.title}` : "AcreTown logo";
+        image.loading = "lazy";
+        image.decoding = "async";
+        if (isFallbackImage) image.classList.add("is-fallback");
+        image.addEventListener("load", () => fallback.remove(), { once: true });
+        image.addEventListener("error", useFallbackImage);
+        wrapper.appendChild(image);
         return wrapper;
       }
 
@@ -1147,9 +1177,7 @@
         const container = document.createElement("div");
         container.className = "mobile-property-preview";
 
-        if (property.photo) {
-          container.appendChild(makePropertyImage(property, "mobile-property-photo"));
-        }
+        container.appendChild(makePropertyImage(property, "mobile-property-photo"));
 
         const body = document.createElement("div");
         body.className = "mobile-property-body";
