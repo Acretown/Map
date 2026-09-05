@@ -30,6 +30,13 @@
       host.style.cssText = 'width:100%;margin:24px 0;clear:both';
       anchor.insertAdjacentElement(before ? 'beforebegin' : 'afterend', host);
     }
+    // Activity is separate from lifetime proof and never added to listings.
+    const full = document.querySelector('[data-acretown-proof-frame="full"]');
+    if (full) {
+      const activity = document.createElement('div');
+      activity.dataset.acretownProofFrame = 'process';
+      full.insertAdjacentElement('afterend', activity);
+    }
     const loader = document.createElement('script');
     loader.src = loaderURL;
     loader.async = true;
