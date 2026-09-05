@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "metrics": {
+    "states": {
+      "value": 43,
+      "lowerBound": false,
+      "verified": true,
+      "source": "Marketing Status SUMMARY + Map Feed V2; conservative reconciliation, see sales-audit.md",
+      "checkedAt": "2026-09-05T23:24:07.129378+00:00",
+      "definition": "verified property-location states; minimum documented coverage, not buyer residence"
+    },
+    "acres": {
+      "value": 3800,
+      "lowerBound": true,
+      "verified": true,
+      "source": "Marketing Status SUMMARY + Map Feed V2; conservative reconciliation, see sales-audit.md",
+      "checkedAt": "2026-09-05T23:24:07.129378+00:00"
+    },
+    "closed90": {
+      "value": null,
+      "verified": false,
+      "source": "SUMMARY status and OUT DATE candidate; closing semantics not yet verified",
+      "checkedAt": null,
+      "periodStart": null,
+      "periodEnd": null
+    },
+    "shoppers30": {
+      "value": null,
+      "verified": false,
+      "source": "GA4 totalUsers filtered to property-detail pages",
+      "definition": "unique-property-page-users",
+      "checkedAt": null,
+      "periodStart": null,
+      "periodEnd": null
+    },
+    "pending": {
+      "value": null,
+      "verified": false,
+      "source": "Current website Pending inventory; confirm Locked program equivalence",
+      "definition": "website-pending-confirmed-locked",
+      "checkedAt": null
+    },
+    "propertiesSold": {
+      "value": 320,
+      "lowerBound": true,
+      "verified": true,
+      "source": "Marketing Status SUMMARY + Map Feed V2; conservative reconciliation, see sales-audit.md",
+      "checkedAt": "2026-09-05T23:24:07.129378+00:00"
+    }
+  }
+}

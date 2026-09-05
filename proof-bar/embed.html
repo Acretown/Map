@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AcreTown buyer proof</title>
+<style>html,body{margin:0;padding:0;background:transparent}body{font-family:Arial,sans-serif}#proof{width:100%}</style>
+<div id="proof" data-source="./proof-data.json"></div>
+<script>
+(() => {
+  const params = new URLSearchParams(location.search);
+  const variant = params.get('variant') || 'full';
+  const placement = params.get('placement') || '';
+  if (!['full','compact','shopping','process'].includes(variant)) return;
+  const host = document.getElementById('proof');
+  host.dataset.acretownProof = variant;
+  host.dataset.placement = placement;
+})();
+</script>
+<script src="./acretown-proof.js"></script>
+<script>
+(() => {
+  let parentOrigin;
+  try {parentOrigin = new URL(document.referrer).origin;} catch (_) {return;}
+  const permitted = ['https://www.acretown.com','https://acretown.com'];
+  if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') permitted.push(location.origin);
+  if (!permitted.includes(parentOrigin) || parent === window) return;
+  const host = document.getElementById('proof');
+  const reportSize = () => parent.postMessage({type:'acretown-proof-height',height:Math.ceil(host.getBoundingClientRect().height)},parentOrigin);
+  new ResizeObserver(reportSize).observe(host);
+  new MutationObserver(reportSize).observe(host,{attributes:true,attributeFilter:['hidden','style']});
+  reportSize();
+})();
+</script>
+</html>
