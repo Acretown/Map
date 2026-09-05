@@ -20,7 +20,7 @@
         variant = 'full';
       } else if (document.body.classList.contains('single-property')) {
         const checkout = document.querySelector('main a[href^="https://acretownpayments.company.site"]');
-        anchor = checkout ? checkout.closest('p,figure,div') : document.querySelector('.property-cta-bottom');
+        anchor = checkout ? checkout.closest('p,figure,h2,h3,div') : document.querySelector('.property-cta-bottom');
         variant = 'compact';
         before = !checkout;
       }
