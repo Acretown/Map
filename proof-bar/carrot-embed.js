@@ -2,7 +2,7 @@
   'use strict';
   const script = document.currentScript;
   if (!script || window.AcreTownProofFrames) return;
-  const base = new URL('./embed.html', script.src);
+  const base = new URL('./embed.html?v=20260906-visitors', script.src);
   const frames = new Map();
   window.addEventListener('message', event => {
     if (event.origin !== base.origin || !event.data || event.data.type !== 'acretown-proof-height') return;
@@ -12,7 +12,7 @@
       if (typeof height !== 'number' || !Number.isFinite(height) || height < 0 || height > 2000) return;
       frame.style.height = `${Math.ceil(height)}px`;
       frame.setAttribute('aria-hidden', height === 0 ? 'true' : 'false');
-      if (frame.parentElement.dataset.acretownProofFrame === 'process') {
+      if (['process','shopping'].includes(frame.parentElement.dataset.acretownProofFrame)) {
         frame.parentElement.style.marginBottom = height > 0 ? '32px' : '0';
       }
     }
@@ -27,7 +27,7 @@
       host.dataset.proofMounted = 'true';
       const src = new URL(base);src.searchParams.set('variant',variant);src.searchParams.set('placement',placement);
       const frame = document.createElement('iframe');
-      frame.title = variant === 'shopping' ? 'AcreTown property shopping activity' : variant === 'process' ? 'AcreTown properties in process' : 'AcreTown buyer proof';
+      frame.title = variant === 'shopping' ? 'AcreTown property-page visitors' : variant === 'process' ? 'AcreTown properties in process' : 'AcreTown buyer proof';
       frame.style.cssText = 'display:block;width:100%;height:0;border:0;margin:0;padding:0;';
       frame.setAttribute('aria-hidden','true');
       frame.referrerPolicy = 'strict-origin-when-cross-origin';
