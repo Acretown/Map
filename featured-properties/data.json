@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-06T19:34:33.702Z",
+  "cards": [
+    {
+      "id": "strongsville",
+      "title": "Strongsville, OH",
+      "highlight": "Cleared homesite · All utilities",
+      "acres": 2.2,
+      "price": 99900,
+      "status": "Available",
+      "url": "https://www.acretown.com/property/strongsville/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2024/08/strongsville-feature-1920x800.jpg"
+    },
+    {
+      "id": "oswego13",
+      "title": "Oswego County, NY",
+      "highlight": "No HOA · Signature Stonewall",
+      "acres": 16.01,
+      "price": 79900,
+      "status": "Pending",
+      "url": "https://www.acretown.com/property/oswego13/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/07/oswego13-feature-1920x800.jpg"
+    },
+    {
+      "id": "carrollms",
+      "title": "Carroll County, MS",
+      "highlight": "Creekside land · No restrictions",
+      "acres": 14.06,
+      "price": 59900,
+      "status": "Available",
+      "url": "https://www.acretown.com/property/carrollms/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/08/carrollms-feature-1920x800.jpg"
+    },
+    {
+      "id": "lakeholbrookall",
+      "title": "Lake Holbrook, TX",
+      "highlight": "Lake, beach & dock access",
+      "acres": 3.62,
+      "price": 139900,
+      "status": "Available",
+      "url": "https://www.acretown.com/property/lakeholbrookall/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/06/lakeholbrookALL-feature-1920x800.jpg"
+    },
+    {
+      "id": "clevelandar3",
+      "title": "Cleveland County, AR",
+      "highlight": "New road · Power & water",
+      "acres": 9.69,
+      "price": 42900,
+      "status": "Available",
+      "url": "https://www.acretown.com/property/clevelandar3/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/03/clevelandar3-feature-1920x800.jpg"
+    },
+    {
+      "id": "oswego9",
+      "title": "Oswego County, NY",
+      "highlight": "Power on-site · Perc-approved",
+      "acres": 6.01,
+      "price": 59900,
+      "status": "Available",
+      "url": "https://www.acretown.com/property/oswego9/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2025/12/oswego9-feature-1920x800.jpg"
+    }
+  ]
+}
