@@ -25,9 +25,10 @@
     const buttons=el('div','wp-block-buttons'),button=el('div','wp-block-button'),link=el('a','wp-block-button__link wp-element-button',c.status==='Pending'?'View Pending Property':'View Property');link.href=c.url;button.append(link);buttons.append(button);root.append(buttons);return root;
   }
   function render(host,data){
-    const existing=Array.from(host.children).filter(e=>e.classList.contains('wp-block-columns'));
+    const container=host.querySelector(':scope > .wp-block-group__inner-container')||host;
+    const existing=Array.from(container.children).filter(e=>e.classList.contains('wp-block-columns'));
     if(existing.length!==2)return;
-    const fragment=document.createDocumentFragment();for(let i=0;i<6;i+=3){const row=el('div','wp-block-columns');data.cards.slice(i,i+3).forEach(c=>row.append(card(c)));fragment.append(row);}
+    const fragment=document.createDocumentFragment();for(let i=0;i<6;i+=3){const row=el('div',existing[i/3].className);data.cards.slice(i,i+3).forEach(c=>row.append(card(c)));fragment.append(row);}
     existing[0].before(fragment);existing.forEach(n=>n.remove());host.dataset.featuredUpdated=data.checkedAt;
   }
   async function init(){
