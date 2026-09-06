@@ -47,6 +47,7 @@
     .compact span{display:inline-block}.compact strong{color:#10333e;font-size:17px;margin-right:4px}
     .activity{padding:20px 24px;border:1px solid #dbe5e4;border-radius:10px;background:#fff}.activity p{margin:0}.activity p+p{margin-top:8px}
     .activity .lead{font-size:18px;font-weight:650;color:#10333e}.activity small{display:block;font-size:12px;color:#49656c;margin-top:8px}
+    .shopping{background:#f7f9f8;border:0;border-left:3px solid #eba93d;border-radius:0 10px 10px 0}.shopping .lead{font-weight:400;font-size:17px;line-height:1.5}.shopping .lead strong{font-weight:750}.shopping small{margin-top:6px;color:#526c72}
     .process{background:#10333e;color:#edf4f3;border-color:#10333e}.process .lead{color:#fff}.process strong{color:#f6c576}.process .eyebrow{color:#f6c576}
     @media(max-width:520px){.panel{padding:24px 20px}.stat{flex-basis:50%;padding:0 12px}dd{font-size:30px}.compact{justify-content:flex-start;padding:14px}.activity{padding:20px}.activity .lead{font-size:17px}}
   `;
@@ -66,7 +67,7 @@
     host.style.display = 'none';
     if (!m.stats.length && m.shoppers === null && m.pending === null) return;
     shadow.append(node('style', css));
-    const panel = node('section', undefined, m.variant === 'compact' ? 'compact' : m.variant === 'full' ? 'panel' : 'activity' + (m.variant === 'process' ? ' process' : ''));
+    const panel = node('section', undefined, m.variant === 'compact' ? 'compact' : m.variant === 'full' ? 'panel' : 'activity' + (m.variant === 'process' ? ' process' : ' shopping'));
     panel.setAttribute('aria-label', m.variant === 'process' ? 'AcreTown buying activity' : 'AcreTown buyer experience');
     if (m.variant === 'full') {
       panel.append(node('p', 'Experience you can see', 'eyebrow'), node('h2', m.headline));
@@ -77,8 +78,10 @@
       m.stats.forEach(s => {const item = node('span'); item.append(node('strong', s.number), document.createTextNode(' ' + s.label)); panel.append(item);});
     } else if (m.variant === 'shopping') {
       const count = formats.format(m.shoppers);
-      panel.append(node('p', `${options.placement === 'how-it-works-hero' ? 'You’re not alone. ' : ''}${count} unique ${m.shoppers === 1 ? 'visitor viewed' : 'visitors viewed'} AcreTown property pages in the last 30 days.`, 'lead'));
-      panel.append(node('small', 'Measured by Google Analytics. Visitor counts may include internal or automated traffic.'));
+      const lead = node('p', undefined, 'lead');
+      if (options.placement === 'how-it-works-hero') lead.append(document.createTextNode('You’re not alone. '));
+      lead.append(node('strong', `${count} unique ${m.shoppers === 1 ? 'visitor' : 'visitors'}`), document.createTextNode(' viewed AcreTown property pages in the last 30 days.'));
+      panel.append(lead, node('small', 'Measured by Google Analytics.'));
     } else {
       panel.append(node('p', 'From screen to soil', 'eyebrow'));
       const p = node('p', undefined, 'lead');
