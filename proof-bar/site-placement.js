@@ -3,7 +3,7 @@
   const script = document.currentScript;
   if (!script || window.AcreTownProofPlacement) return;
   window.AcreTownProofPlacement = true;
-  const loaderURL = new URL('./carrot-embed.js', script.src).href;
+  const loaderURL = new URL('./carrot-embed.js?v=20260906-spacing', script.src).href;
   function place() {
     if (document.querySelector('[data-acretown-proof-frame]')) return;
     let anchor, variant, before = false;
