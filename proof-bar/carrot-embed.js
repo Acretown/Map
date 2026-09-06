@@ -2,7 +2,7 @@
   'use strict';
   const script = document.currentScript;
   if (!script || window.AcreTownProofFrames) return;
-  const base = new URL('./embed.html?v=20260906-visitors', script.src);
+  const base = new URL('./embed.html?v=20260906-clean', script.src);
   const frames = new Map();
   window.addEventListener('message', event => {
     if (event.origin !== base.origin || !event.data || event.data.type !== 'acretown-proof-height') return;
