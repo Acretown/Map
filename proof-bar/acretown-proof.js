@@ -77,8 +77,8 @@
       m.stats.forEach(s => {const item = node('span'); item.append(node('strong', s.number), document.createTextNode(' ' + s.label)); panel.append(item);});
     } else if (m.variant === 'shopping') {
       const count = formats.format(m.shoppers);
-      panel.append(node('p', `${options.placement === 'how-it-works-hero' ? 'You’re not alone. ' : ''}${count} ${m.shoppers === 1 ? 'person' : 'people'} shopped for land on AcreTown in the last 30 days.`, 'lead'));
-      panel.append(node('small', 'Based on unique visitors to AcreTown property pages in the last 30 days.'));
+      panel.append(node('p', `${options.placement === 'how-it-works-hero' ? 'You’re not alone. ' : ''}${count} unique ${m.shoppers === 1 ? 'visitor viewed' : 'visitors viewed'} AcreTown property pages in the last 30 days.`, 'lead'));
+      panel.append(node('small', 'Measured by Google Analytics. Visitor counts may include internal or automated traffic.'));
     } else {
       panel.append(node('p', 'From screen to soil', 'eyebrow'));
       const p = node('p', undefined, 'lead');
