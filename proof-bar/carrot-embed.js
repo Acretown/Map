@@ -12,6 +12,9 @@
       if (typeof height !== 'number' || !Number.isFinite(height) || height < 0 || height > 2000) return;
       frame.style.height = `${Math.ceil(height)}px`;
       frame.setAttribute('aria-hidden', height === 0 ? 'true' : 'false');
+      if (frame.parentElement.dataset.acretownProofFrame === 'process') {
+        frame.parentElement.style.marginBottom = height > 0 ? '32px' : '0';
+      }
     }
   });
   const init = () => {
