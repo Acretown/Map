@@ -20,7 +20,7 @@
       "value": 22,
       "verified": true,
       "source": "Marketing Status SUMMARY SOLD and SOLD - O/F with OUT DATE; Andy confirmed closing-date source September 5 2026",
-      "checkedAt": "2026-09-05T23:51:47.145Z",
+      "checkedAt": "2026-09-06T00:23:58.700Z",
       "periodStart": "2026-06-07T07:00:00.000Z",
       "periodEnd": "2026-09-05T07:00:00.000Z"
     },
@@ -38,7 +38,7 @@
       "verified": true,
       "source": "Marketing Status Map Feed V2: unique website Pending URLs; Andy confirmed signed agreement/in closing on September 5 2026",
       "definition": "website-pending-confirmed-locked",
-      "checkedAt": "2026-09-05T23:51:47.145Z"
+      "checkedAt": "2026-09-06T00:23:58.700Z"
     },
     "propertiesSold": {
       "value": 320,
