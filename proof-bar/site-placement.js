@@ -3,7 +3,7 @@
   const script = document.currentScript;
   if (!script || window.AcreTownProofPlacement) return;
   window.AcreTownProofPlacement = true;
-  const loaderURL = new URL('./carrot-embed.js?v=20260906-spacing', script.src).href;
+  const loaderURL = new URL('./carrot-embed.js?v=20260906-visitors', script.src).href;
   function place() {
     if (document.querySelector('[data-acretown-proof-frame]')) return;
     let anchor, variant, before = false;
@@ -36,6 +36,12 @@
       const activity = document.createElement('div');
       activity.dataset.acretownProofFrame = 'process';
       full.insertAdjacentElement('afterend', activity);
+      if (location.pathname.replace(/\/$/, '') === '/how-to-buy-land') {
+        const visitors = document.createElement('div');
+        visitors.dataset.acretownProofFrame = 'shopping';
+        visitors.dataset.placement = 'trust';
+        activity.insertAdjacentElement('afterend', visitors);
+      }
     }
     const loader = document.createElement('script');
     loader.src = loaderURL;
