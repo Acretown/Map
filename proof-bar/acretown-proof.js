@@ -2,7 +2,7 @@
   'use strict';
   const DAY = 86400000;
   const limits = {propertiesSold: Infinity, states: Infinity, acres: Infinity, closed90: 8, shoppers30: 8, pending: 2};
-  const labels = {propertiesSold: 'Properties Sold', states: 'States', acres: 'Acres Sold', closed90: 'Closed in the Last 90 Days'};
+  const labels = {buyersHelped: 'Buyers Helped', states: 'States', acres: 'Acres Sold', closed90: 'Closed in the Last 90 Days'};
   const formats = new Intl.NumberFormat('en-US', {maximumFractionDigits: 2});
   function value(data, key, now = Date.now()) {
     const m = data && data.metrics && data.metrics[key];
@@ -24,13 +24,15 @@
   }
   function model(data, options = {}, now = Date.now()) {
     const variant = options.variant || 'full';
-    const keys = variant === 'compact' ? ['propertiesSold', 'states', 'acres'] : ['propertiesSold', 'states', 'acres', 'closed90'];
+    // Bob-approved static figures, September 6, 2026. Independent of automated sales metrics.
+    const fixed = {buyersHelped: 331, states: 49};
+    const keys = variant === 'compact' ? ['buyersHelped', 'states', 'acres'] : ['buyersHelped', 'states', 'acres', 'closed90'];
     const stats = ['full', 'compact'].includes(variant) ? keys.flatMap(key => {
-      const n = value(data, key, now);
-      return n === null ? [] : [{key, label: labels[key], number: formats.format(n) + (['propertiesSold','acres'].includes(key) && data.metrics[key].lowerBound === true ? '+' : '')}];
+      const n = Object.prototype.hasOwnProperty.call(fixed, key) ? fixed[key] : value(data, key, now);
+      return n === null ? [] : [{key, label: labels[key], number: formats.format(n) + (key === 'acres' && data.metrics[key].lowerBound === true ? '+' : '')}];
     }) : [];
-    const propertiesSold = stats.find(s => s.key === 'propertiesSold'), states = stats.find(s => s.key === 'states');
-    const headline = propertiesSold && states ? `${propertiesSold.number} properties sold across ${states.number} states.` : 'AcreTown, by the numbers.';
+    const buyersHelped = stats.find(s => s.key === 'buyersHelped'), states = stats.find(s => s.key === 'states');
+    const headline = buyersHelped && states ? `${buyersHelped.number} buyers helped across ${states.number} states.` : 'AcreTown, by the numbers.';
     const shoppingAllowed = ['trust', 'how-it-works-hero'].includes(options.placement);
     const shoppers = variant === 'shopping' && shoppingAllowed ? value(data, 'shoppers30', now) : null;
     const pending = variant === 'process' ? value(data, 'pending', now) : null;
