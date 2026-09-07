@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Explore available, pending, and sold AcreTown properties on an interactive map.">
+  <meta name="description" content="Explore available, locked, and sold AcreTown properties on an interactive map.">
   <title>AcreTown Property Map</title>
   <style>
     :root {
@@ -778,7 +778,7 @@
         <label class="status-toggle">
           <input type="checkbox" value="pending" data-status-filter checked>
           <span class="status-dot pending" aria-hidden="true"></span>
-          Pending
+          Locked
         </label>
         <label class="status-toggle">
           <input type="checkbox" value="sold" data-status-filter checked>
@@ -890,7 +890,7 @@
       ];
       const STATUS_META = {
         available: { label: "Available", color: "#168a4b", border: "#0d5f32", rank: 0 },
-        pending: { label: "Pending", color: "#e0a500", border: "#9b6d00", rank: 1 },
+        pending: { label: "Locked", color: "#e0a500", border: "#9b6d00", rank: 1 },
         sold: { label: "Sold", color: "#cf3e3e", border: "#8f2828", rank: 2 }
       };
       const STATE_NAMES = {
