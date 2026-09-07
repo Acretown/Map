@@ -1,17 +1,7 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-06T19:51:39.707Z",
+  "checkedAt": "2026-09-07T14:00:13.657Z",
   "cards": [
-    {
-      "id": "strongsville",
-      "title": "Strongsville, OH",
-      "highlight": "Cleared homesite · All utilities",
-      "acres": 2.2,
-      "price": 99900,
-      "status": "Available",
-      "url": "https://www.acretown.com/property/strongsville/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2024/08/strongsville-feature-1920x800.jpg"
-    },
     {
       "id": "oswego13",
       "title": "Oswego County, NY",
@@ -23,14 +13,14 @@
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/07/oswego13-feature-1920x800.jpg"
     },
     {
-      "id": "carrollms",
-      "title": "Carroll County, MS",
-      "highlight": "Creekside land · No restrictions",
-      "acres": 14.06,
-      "price": 59900,
+      "id": "strongsville",
+      "title": "Strongsville, OH",
+      "highlight": "Cleared homesite · All utilities",
+      "acres": 2.2,
+      "price": 99900,
       "status": "Available",
-      "url": "https://www.acretown.com/property/carrollms/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/08/carrollms-feature-1920x800.jpg"
+      "url": "https://www.acretown.com/property/strongsville/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2024/08/strongsville-feature-1920x800.jpg"
     },
     {
       "id": "lakeholbrookall",
@@ -51,6 +41,16 @@
       "status": "Available",
       "url": "https://www.acretown.com/property/clevelandar3/",
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/03/clevelandar3-feature-1920x800.jpg"
+    },
+    {
+      "id": "carrollms",
+      "title": "Carroll County, MS",
+      "highlight": "Creekside land · No restrictions",
+      "acres": 14.06,
+      "price": 59900,
+      "status": "Available",
+      "url": "https://www.acretown.com/property/carrollms/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/08/carrollms-feature-1920x800.jpg"
     },
     {
       "id": "oswego9",
