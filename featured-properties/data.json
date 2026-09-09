@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-08T14:00:19.629Z",
+  "checkedAt": "2026-09-09T14:00:10.722Z",
   "cards": [
     {
       "id": "oswego13",
@@ -11,16 +11,6 @@
       "status": "Pending",
       "url": "https://www.acretown.com/property/oswego13/",
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/07/oswego13-feature-1920x800.jpg"
-    },
-    {
-      "id": "strongsville",
-      "title": "Strongsville, OH",
-      "highlight": "Cleared homesite · All utilities",
-      "acres": 2.2,
-      "price": 99900,
-      "status": "Available",
-      "url": "https://www.acretown.com/property/strongsville/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2024/08/strongsville-feature-1920x800.jpg"
     },
     {
       "id": "lakeholbrookall",
@@ -43,6 +33,16 @@
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/03/clevelandar3-feature-1920x800.jpg"
     },
     {
+      "id": "oswego9",
+      "title": "Oswego County, NY",
+      "highlight": "Power on-site · Perc-approved",
+      "acres": 6.01,
+      "price": 59900,
+      "status": "Available",
+      "url": "https://www.acretown.com/property/oswego9/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2025/12/oswego9-feature-1920x800.jpg"
+    },
+    {
       "id": "carrollms",
       "title": "Carroll County, MS",
       "highlight": "Creekside land · No restrictions",
@@ -53,14 +53,14 @@
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/08/carrollms-feature-1920x800.jpg"
     },
     {
-      "id": "oswego9",
-      "title": "Oswego County, NY",
-      "highlight": "Power on-site · Perc-approved",
-      "acres": 6.01,
+      "id": "harrisonwv",
+      "title": "Harrison County, WV",
+      "highlight": "Flat homesite · Easy access",
+      "acres": 10,
       "price": 59900,
       "status": "Available",
-      "url": "https://www.acretown.com/property/oswego9/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2025/12/oswego9-feature-1920x800.jpg"
+      "url": "https://www.acretown.com/property/harrisonwv/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/08/harrisonwv-feature-1920x800.jpg"
     }
   ]
 }
