@@ -1,7 +1,17 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-10T14:00:16.758Z",
+  "checkedAt": "2026-09-11T14:00:17.223Z",
   "cards": [
+    {
+      "id": "harrisonwv",
+      "title": "Harrison County, WV",
+      "highlight": "Flat homesite · Easy access",
+      "acres": 10,
+      "price": 59900,
+      "status": "Available",
+      "url": "https://www.acretown.com/property/harrisonwv/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/08/harrisonwv-feature-1920x800.jpg"
+    },
     {
       "id": "oswego13",
       "title": "Oswego County, NY",
@@ -11,6 +21,16 @@
       "status": "Pending",
       "url": "https://www.acretown.com/property/oswego13/",
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/07/oswego13-feature-1920x800.jpg"
+    },
+    {
+      "id": "goldenhills",
+      "title": "Golden Hills, CA",
+      "highlight": "No HOA · All Utilities",
+      "acres": 0.68,
+      "price": 54900,
+      "status": "Available",
+      "url": "https://www.acretown.com/property/goldenhills/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/07/goldenhills-feature-1920x800.jpg"
     },
     {
       "id": "lakeholbrookall",
@@ -41,26 +61,6 @@
       "status": "Available",
       "url": "https://www.acretown.com/property/oswego9/",
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2025/12/oswego9-feature-1920x800.jpg"
-    },
-    {
-      "id": "carrollms",
-      "title": "Carroll County, MS",
-      "highlight": "Creekside land · No restrictions",
-      "acres": 14.06,
-      "price": 59900,
-      "status": "Available",
-      "url": "https://www.acretown.com/property/carrollms/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/08/carrollms-feature-1920x800.jpg"
-    },
-    {
-      "id": "harrisonwv",
-      "title": "Harrison County, WV",
-      "highlight": "Flat homesite · Easy access",
-      "acres": 10,
-      "price": 59900,
-      "status": "Available",
-      "url": "https://www.acretown.com/property/harrisonwv/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/08/harrisonwv-feature-1920x800.jpg"
     }
   ]
 }
