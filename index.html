@@ -98,7 +98,7 @@
 
     .toolbar {
       display: grid;
-      grid-template-columns: minmax(210px, 1.25fr) auto repeat(3, minmax(135px, 0.55fr)) auto;
+      grid-template-columns: minmax(210px, 1.25fr) auto repeat(4, minmax(135px, 0.55fr)) auto;
       align-items: end;
       gap: 12px;
       padding: 14px;
@@ -106,6 +106,17 @@
       border-bottom: 0;
       border-radius: var(--radius) var(--radius) 0 0;
       background: var(--panel);
+    }
+
+    .location-notice {
+      grid-column: 1 / -1;
+      margin: 0;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #edf4fb;
+      color: #193b5e;
+      font-size: 13px;
+      line-height: 1.5;
     }
 
     .field {
@@ -686,8 +697,8 @@
         grid-template-columns: repeat(4, minmax(0, 1fr));
       }
       .search-field { grid-column: 1 / 3; }
-      .status-group { grid-column: 3 / 5; }
-      .reset-button { grid-column: 4; }
+      .status-group { grid-column: 3; }
+      .reset-button { grid-column: 4; grid-row: 1; }
       .map-shell { grid-template-columns: minmax(0, 1fr) 340px; }
     }
 
@@ -696,10 +707,10 @@
       .intro { align-items: start; flex-direction: column; gap: 8px; }
       .inventory-note { margin-bottom: 0; }
       .toolbar { grid-template-columns: 1fr 1fr; }
-      .search-field, .status-group { grid-column: 1 / -1; }
+      .search-field, .status-group, .state-field { grid-column: 1 / -1; }
       .status-group { min-width: 0; }
       .acreage-field { grid-column: 1 / -1; }
-      .reset-button { grid-column: 1 / -1; }
+      .reset-button { grid-column: 1 / -1; grid-row: auto; }
       .mobile-tabs { display: flex; }
       .map-shell {
         display: block;
@@ -756,7 +767,7 @@
       <div>
         <p class="eyebrow">AcreTown Properties</p>
         <h1>Find your piece of land</h1>
-        <p class="intro-copy">Search live inventory, narrow it by status, price, or acreage, and select any property for details.</p>
+        <p class="intro-copy">Search live inventory, narrow it by state, status, price, or acreage, and select any property for details.</p>
       </div>
       <div class="inventory-note">Live inventory</div>
     </header>
@@ -787,6 +798,11 @@
         </label>
       </fieldset>
 
+      <label class="field state-field" for="property-state">
+        State
+        <select id="property-state"><option value="">All states</option></select>
+      </label>
+
       <label class="field" for="price-min">
         Minimum price
         <select id="price-min"><option value="0">No minimum</option></select>
@@ -811,6 +827,7 @@
       </label>
 
       <button class="reset-button" id="reset-filters" type="button">Reset filters</button>
+      <p class="location-notice" id="location-notice" role="status" aria-live="polite" hidden></p>
     </section>
 
     <div class="mobile-tabs" role="tablist" aria-label="Property display">
@@ -914,6 +931,8 @@
 
       const app = document.getElementById("property-app");
       const searchInput = document.getElementById("property-search");
+      const stateSelect = document.getElementById("property-state");
+      const locationNotice = document.getElementById("location-notice");
       const searchSuggestions = document.getElementById("property-search-suggestions");
       const minPriceSelect = document.getElementById("price-min");
       const maxPriceSelect = document.getElementById("price-max");
@@ -934,6 +953,12 @@
       const mobilePropertyClose = document.getElementById("mobile-property-close");
 
       let map;
+      let cityIndexPromise;
+      let searchLocation = null;
+      let searchLocationMarker = null;
+      let searchRequestId = 0;
+      let searchTimer;
+      const locationCache = new Map();
       let MarkerClass;
       let PinClass;
       let clusterer;
@@ -1039,6 +1064,12 @@
           const matches = String(value ?? "").matchAll(/,\s*([A-Z]{2})(?=\s|\d|$)/g);
           for (const match of matches) {
             if (STATE_NAMES[match[1]]) return match[1];
+          }
+        }
+        for (const value of values) {
+          const text = normalizeSearchText(value);
+          for (const [code, name] of Object.entries(STATE_NAMES).sort((a, b) => b[1].length - a[1].length)) {
+            if (new RegExp(`(?:^| )${normalizeSearchText(name)}(?: |$)`).test(text)) return code;
           }
         }
         return "";
@@ -1322,6 +1353,12 @@
         }
       }
 
+      function configureStateFilter() {
+        Object.entries(STATE_NAMES)
+          .sort((a, b) => a[1].localeCompare(b[1]))
+          .forEach(([code, name]) => appendSelectOption(stateSelect, code, name));
+      }
+
       function configureSearchSuggestions() {
         const suggestionMap = new Map();
         const addSuggestion = value => {
@@ -1362,17 +1399,18 @@
         );
       }
 
-      function filteredInventory() {
+      function filteredInventory({ ignoreSearch = false } = {}) {
         const statuses = selectedStatuses();
         const minPrice = Number(minPriceSelect.value);
         const maxPrice = maxPriceSelect.value === "Infinity" ? Infinity : Number(maxPriceSelect.value);
         const acreageRange = acreageSelect.value === "any"
           ? null
           : acreageSelect.value.split("-").map(value => value === "Infinity" ? Infinity : Number(value));
-        const queryTokens = normalizeSearchText(searchInput.value).split(" ").filter(Boolean);
+        const queryTokens = ignoreSearch ? [] : normalizeSearchText(searchInput.value).split(" ").filter(Boolean);
 
         return properties.filter(property => {
           if (!statuses.has(property.status)) return false;
+          if (stateSelect.value && property.stateCode !== stateSelect.value) return false;
           if (Number.isFinite(property.price) && (property.price < minPrice || property.price > maxPrice)) return false;
           if (!Number.isFinite(property.price) && (minPrice > 0 || Number.isFinite(maxPrice))) return false;
           if (acreageRange) {
@@ -1388,6 +1426,127 @@
               : property.searchText.includes(token)
           ));
         });
+      }
+
+      function distanceMiles(origin, property) {
+        const radians = degrees => degrees * Math.PI / 180;
+        const latDelta = radians(property.lat - origin.lat);
+        const lngDelta = radians(property.lng - origin.lng);
+        const a = Math.sin(latDelta / 2) ** 2 + Math.cos(radians(origin.lat))
+          * Math.cos(radians(property.lat)) * Math.sin(lngDelta / 2) ** 2;
+        return 3958.8 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(Math.max(0, 1 - a)));
+      }
+
+      function nearestProperties(origin, items) {
+        const ranked = items.map(property => ({ property, miles: distanceMiles(origin, property) }))
+          .sort((a, b) => a.miles - b.miles || a.property.sourceIndex - b.property.sourceIndex);
+        if (!ranked.length) return [];
+        const radius = Math.max(ranked[0].miles * 1.5, ranked[0].miles + 25);
+        return ranked.filter(item => item.miles <= radius).slice(0, 3);
+      }
+
+      function clearSearchLocation() {
+        searchLocation = null;
+        if (searchLocationMarker) searchLocationMarker.map = null;
+        searchLocationMarker = null;
+        locationNotice.hidden = true;
+        locationNotice.textContent = "";
+      }
+
+      function announceLocation(message) {
+        locationNotice.textContent = message;
+        locationNotice.hidden = false;
+      }
+
+      function fitSearchLocation() {
+        if (!map || !searchLocation) return;
+        const nearest = nearestProperties(searchLocation, visibleProperties);
+        const bounds = buildBounds(nearest.map(item => item.property));
+        bounds.extend({ lat: searchLocation.lat, lng: searchLocation.lng });
+        lastVisibleBounds = bounds;
+        savedMobileCamera = null;
+        if (app.dataset.mobileView !== "list" || !isCompactMapView()) {
+          map.fitBounds(bounds, { top: 70, right: 70, bottom: 70, left: 70 });
+          google.maps.event.addListenerOnce(map, "idle", () => {
+            if (map.getZoom() > 11) map.setZoom(11);
+          });
+        }
+        const state = stateSelect.value ? ` in ${STATE_NAMES[stateSelect.value]}` : "";
+        announceLocation(nearest.length
+          ? `Near ${searchLocation.label}. The closest matching property${state} is about ${Math.max(1, Math.round(nearest[0].miles))} miles away in a straight line. Your filters still apply; pan or zoom to explore more.`
+          : `Found ${searchLocation.label}, but no properties match your filters${state}. Try another state, price, acreage, or status.`);
+        const attribution = createTextElement("a", "", "City data: GeoNames");
+        attribution.href = "https://www.geonames.org/";
+        attribution.target = "_blank";
+        attribution.rel = "noopener noreferrer";
+        locationNotice.append(" ", attribution);
+      }
+
+      function normalizeCityName(value) {
+        return normalizeSearchText(value).replace(/\bsaint\b/g, "st").replace(/^city of /, "").replace(/ city$/, "");
+      }
+
+      function findCity(query, cities, preferredState = "") {
+        let name = normalizeSearchText(query).replace(/ (?:usa|us|united states)$/, "");
+        let explicitState = "";
+        const states = Object.entries(STATE_NAMES).sort((a, b) => b[1].length - a[1].length);
+        for (const [code, label] of states) {
+          const suffixes = [normalizeSearchText(label), code.toLowerCase()];
+          const suffix = suffixes.find(part => name.endsWith(` ${part}`));
+          if (!suffix) continue;
+          explicitState = code;
+          name = name.slice(0, -(suffix.length + 1)).trim();
+          break;
+        }
+        const key = normalizeCityName(name);
+        const matches = cities.filter(city => normalizeCityName(city[0]) === key && (!explicitState || city[1] === explicitState));
+        // The index is ordered by population. A chosen state disambiguates a
+        // same-name city when possible; an explicit city/state always wins.
+        const city = (!explicitState && matches.find(item => item[1] === preferredState)) || matches[0];
+        return city ? { lat: city[2], lng: city[3], label: `${city[0]}, ${city[1]}` } : null;
+      }
+
+      function loadCityIndex() {
+        if (!cityIndexPromise) {
+          cityIndexPromise = fetch(new URL("us-cities.json?v=20260912", window.location.href), { cache: "force-cache" })
+            .then(response => {
+              if (!response.ok) throw new Error("CITY_INDEX_UNAVAILABLE");
+              return response.json();
+            })
+            .then(data => {
+              if (!Array.isArray(data.cities) || !data.cities.length) throw new Error("CITY_INDEX_UNAVAILABLE");
+              return data.cities;
+            })
+            .catch(error => { cityIndexPromise = null; throw error; });
+        }
+        return cityIndexPromise;
+      }
+
+      async function searchNearby(query, requestId) {
+        const key = normalizeSearchText(query);
+        const lookupKey = `${key}|${stateSelect.value}`;
+        announceLocation(`Looking for ${query} and nearby properties…`);
+        try {
+          let location = locationCache.get(lookupKey);
+          if (!location) {
+            location = findCity(query, await loadCityIndex(), stateSelect.value);
+            if (!location) throw new Error("ZERO_RESULTS");
+            if (locationCache.size >= 30) locationCache.delete(locationCache.keys().next().value);
+            locationCache.set(lookupKey, location);
+          }
+          if (requestId !== searchRequestId || normalizeSearchText(searchInput.value) !== key) return;
+          searchLocation = location;
+          const pin = new PinClass({ background: "#2168b0", borderColor: "#134477", glyphColor: "#ffffff", glyphText: "●", scale: 1.1 });
+          searchLocationMarker = new MarkerClass({ map, position: { lat: location.lat, lng: location.lng }, title: `Search location: ${location.label}`, content: pin, zIndex: 1000 });
+          refreshInventory({ preserveLocation: true });
+        } catch (error) {
+          if (requestId !== searchRequestId) return;
+          const notFound = /ZERO_RESULTS/.test(String(error));
+          announceLocation(notFound
+            ? `We couldn’t find “${query}”. Try a city and state (for example, Santa Fe, NM), or search a property name. Smaller communities may not be included.`
+            : "City search is temporarily unavailable. Search a property name or use the state and other filters to browse.");
+          showState("empty", notFound ? "Location not found" : "No matching properties", "Use the state filter, or try a different search.");
+        }
       }
 
       function sortProperties(items) {
@@ -1491,7 +1650,7 @@
 
         const currentZoom = map.getZoom() ?? 0;
         const bounds = map.getBounds();
-        if (!bounds || currentZoom <= 4.5) {
+        if (!bounds || (currentZoom <= 4.5 && !searchLocation)) {
           renderResults(visibleProperties);
           return;
         }
@@ -1715,7 +1874,7 @@
         mapState.hidden = true;
       }
 
-      function refreshInventory({ fit = true } = {}) {
+      function refreshInventory({ fit = true, preserveLocation = false } = {}) {
         if (!clusterer) return;
         clusterAnimationId += 1;
         releaseTravelingClusterMarkers({ render: false });
@@ -1726,7 +1885,10 @@
           else minPriceSelect.value = maxPriceSelect.value;
         }
 
-        visibleProperties = filteredInventory();
+        const query = searchInput.value.trim();
+        const requestId = ++searchRequestId;
+        if (!preserveLocation) clearSearchLocation();
+        visibleProperties = filteredInventory({ ignoreSearch: Boolean(searchLocation) });
         clusterer.clearMarkers();
         clusterer.addMarkers(visibleProperties.map(property => property.marker));
         renderResults(visibleProperties);
@@ -1735,8 +1897,17 @@
           closePropertyDetails();
         }
 
-        if (!visibleProperties.length) {
-          showState("empty", "No matching properties", "Adjust the filters or search to bring properties back into view.");
+        if (searchLocation) {
+          hideState();
+          if (fit) fitSearchLocation();
+          renderViewportResults();
+        } else if (!visibleProperties.length) {
+          if (query.length >= 3) {
+            hideState();
+            searchNearby(query, requestId);
+          } else {
+            showState("empty", "No matching properties", "Adjust the filters or search to bring properties back into view.");
+          }
         } else {
           hideState();
           if (fit) fitVisibleProperties();
@@ -1766,6 +1937,7 @@
           requestAnimationFrame(() => {
             google.maps.event.trigger(map, "resize");
             if (savedMobileCamera) map.moveCamera(savedMobileCamera);
+            else if (searchLocation) fitSearchLocation();
             clusterer?.render();
           });
         } else if (isMobile && selectedPropertyId) {
@@ -1813,19 +1985,34 @@
       }
 
       function wireControls() {
-        let searchTimer;
         searchInput.addEventListener("input", () => {
           window.clearTimeout(searchTimer);
-          searchTimer = window.setTimeout(() => refreshInventory(), 160);
+          searchRequestId += 1;
+          clearSearchLocation();
+          searchTimer = window.setTimeout(() => refreshInventory(), 650);
         });
-        document.querySelectorAll("[data-status-filter]").forEach(input => input.addEventListener("change", () => refreshInventory()));
-        minPriceSelect.addEventListener("change", () => refreshInventory());
-        maxPriceSelect.addEventListener("change", () => refreshInventory());
-        acreageSelect.addEventListener("change", () => refreshInventory());
+        searchInput.addEventListener("keydown", event => {
+          if (event.key !== "Enter") return;
+          event.preventDefault();
+          window.clearTimeout(searchTimer);
+          refreshInventory();
+        });
+        const refreshFilters = () => {
+          window.clearTimeout(searchTimer);
+          refreshInventory({ preserveLocation: Boolean(searchLocation) });
+        };
+        document.querySelectorAll("[data-status-filter]").forEach(input => input.addEventListener("change", refreshFilters));
+        stateSelect.addEventListener("change", refreshFilters);
+        minPriceSelect.addEventListener("change", refreshFilters);
+        maxPriceSelect.addEventListener("change", refreshFilters);
+        acreageSelect.addEventListener("change", refreshFilters);
         sortSelect.addEventListener("change", renderViewportResults);
         resetButton.addEventListener("click", () => {
           const resetScrollPosition = { left: window.scrollX, top: window.scrollY };
+          window.clearTimeout(searchTimer);
           searchInput.value = "";
+          stateSelect.value = "";
+          savedMobileCamera = null;
           minPriceSelect.value = "0";
           maxPriceSelect.value = "Infinity";
           acreageSelect.value = "any";
@@ -1903,6 +2090,7 @@
 
           properties.forEach(createMarker);
           configurePriceFilters();
+          configureStateFilter();
           configureSearchSuggestions();
           clusterer = new window.markerClusterer.MarkerClusterer({
             map,
