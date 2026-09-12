@@ -1524,12 +1524,13 @@
 
       async function searchNearby(query, requestId) {
         const key = normalizeSearchText(query);
-        const lookupKey = `${key}|${stateSelect.value}`;
+        const preferredState = stateSelect.value;
+        const lookupKey = `${key}|${preferredState}`;
         announceLocation(`Looking for ${query} and nearby properties…`);
         try {
           let location = locationCache.get(lookupKey);
           if (!location) {
-            location = findCity(query, await loadCityIndex(), stateSelect.value);
+            location = findCity(query, await loadCityIndex(), preferredState);
             if (!location) throw new Error("ZERO_RESULTS");
             if (locationCache.size >= 30) locationCache.delete(locationCache.keys().next().value);
             locationCache.set(lookupKey, location);
