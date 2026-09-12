@@ -1,17 +1,7 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-11T14:00:17.223Z",
+  "checkedAt": "2026-09-12T14:00:16.368Z",
   "cards": [
-    {
-      "id": "harrisonwv",
-      "title": "Harrison County, WV",
-      "highlight": "Flat homesite · Easy access",
-      "acres": 10,
-      "price": 59900,
-      "status": "Available",
-      "url": "https://www.acretown.com/property/harrisonwv/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/08/harrisonwv-feature-1920x800.jpg"
-    },
     {
       "id": "oswego13",
       "title": "Oswego County, NY",
@@ -23,14 +13,14 @@
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/07/oswego13-feature-1920x800.jpg"
     },
     {
-      "id": "goldenhills",
-      "title": "Golden Hills, CA",
-      "highlight": "No HOA · All Utilities",
-      "acres": 0.68,
-      "price": 54900,
+      "id": "harrisonwv",
+      "title": "Harrison County, WV",
+      "highlight": "Flat homesite · Easy access",
+      "acres": 10,
+      "price": 59900,
       "status": "Available",
-      "url": "https://www.acretown.com/property/goldenhills/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/07/goldenhills-feature-1920x800.jpg"
+      "url": "https://www.acretown.com/property/harrisonwv/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/08/harrisonwv-feature-1920x800.jpg"
     },
     {
       "id": "lakeholbrookall",
@@ -51,6 +41,16 @@
       "status": "Available",
       "url": "https://www.acretown.com/property/clevelandar3/",
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/03/clevelandar3-feature-1920x800.jpg"
+    },
+    {
+      "id": "goldenhills",
+      "title": "Golden Hills, CA",
+      "highlight": "No HOA · All Utilities",
+      "acres": 0.68,
+      "price": 54900,
+      "status": "Available",
+      "url": "https://www.acretown.com/property/goldenhills/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/07/goldenhills-feature-1920x800.jpg"
     },
     {
       "id": "oswego9",
