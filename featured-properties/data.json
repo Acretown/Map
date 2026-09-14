@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-13T14:00:12.613Z",
+  "checkedAt": "2026-09-14T14:00:20.422Z",
   "cards": [
     {
       "id": "oswego13",
@@ -53,14 +53,14 @@
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2025/12/oswego9-feature-1920x800.jpg"
     },
     {
-      "id": "goldenhills",
-      "title": "Golden Hills, CA",
-      "highlight": "No HOA · All Utilities",
-      "acres": 0.68,
-      "price": 54900,
+      "id": "faulkner4",
+      "title": "Faulkner County, AR",
+      "highlight": "No Restrictions · Partially Cleared",
+      "acres": 21.47,
+      "price": 129900,
       "status": "Available",
-      "url": "https://www.acretown.com/property/goldenhills/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/07/goldenhills-feature-1920x800.jpg"
+      "url": "https://www.acretown.com/property/faulkner4/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/05/faulkner4-feature-1920x800.jpg"
     }
   ]
 }
