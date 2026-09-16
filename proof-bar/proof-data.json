@@ -17,28 +17,28 @@
       "checkedAt": "2026-09-05T23:24:07.129378+00:00"
     },
     "closed90": {
-      "value": 21,
+      "value": 20,
       "verified": true,
       "source": "Marketing Status SUMMARY SOLD and SOLD - O/F with OUT DATE; Andy confirmed closing-date source September 5 2026",
-      "checkedAt": "2026-09-15T14:00:46.420Z",
-      "periodStart": "2026-06-17T07:00:00.000Z",
-      "periodEnd": "2026-09-15T07:00:00.000Z"
+      "checkedAt": "2026-09-16T14:00:47.530Z",
+      "periodStart": "2026-06-18T07:00:00.000Z",
+      "periodEnd": "2026-09-16T07:00:00.000Z"
     },
     "shoppers30": {
-      "value": 2232,
+      "value": 2205,
       "verified": true,
       "source": "GA4 337426682 totalUsers; page_view; AcreTown hosts; canonical property-detail pages; includes unexcluded internal or automated traffic",
       "definition": "unique-property-page-users",
-      "checkedAt": "2026-09-15T14:00:46.420Z",
-      "periodStart": "2026-08-16T07:00:00.000Z",
-      "periodEnd": "2026-09-15T07:00:00.000Z"
+      "checkedAt": "2026-09-16T14:00:47.530Z",
+      "periodStart": "2026-08-17T07:00:00.000Z",
+      "periodEnd": "2026-09-16T07:00:00.000Z"
     },
     "pending": {
-      "value": 12,
+      "value": 13,
       "verified": true,
       "source": "Marketing Status Map Feed V2: unique website Pending URLs; Andy confirmed signed agreement/in closing on September 5 2026",
       "definition": "website-pending-confirmed-locked",
-      "checkedAt": "2026-09-15T14:00:46.420Z"
+      "checkedAt": "2026-09-16T14:00:47.530Z"
     },
     "propertiesSold": {
       "value": 320,
