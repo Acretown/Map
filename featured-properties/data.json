@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-16T14:00:44.035Z",
+  "checkedAt": "2026-09-17T14:00:32.478Z",
   "cards": [
     {
       "id": "oswego13",
@@ -43,16 +43,6 @@
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/03/clevelandar3-feature-1920x800.jpg"
     },
     {
-      "id": "oswego9",
-      "title": "Oswego County, NY",
-      "highlight": "Power on-site · Perc-approved",
-      "acres": 6.01,
-      "price": 59900,
-      "status": "Available",
-      "url": "https://www.acretown.com/property/oswego9/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2025/12/oswego9-feature-1920x800.jpg"
-    },
-    {
       "id": "goldenhills",
       "title": "Golden Hills, CA",
       "highlight": "No HOA · All Utilities",
@@ -61,6 +51,16 @@
       "status": "Available",
       "url": "https://www.acretown.com/property/goldenhills/",
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/07/goldenhills-feature-1920x800.jpg"
+    },
+    {
+      "id": "faulkner4",
+      "title": "Faulkner County, AR",
+      "highlight": "No Restrictions · Partially Cleared",
+      "acres": 21.47,
+      "price": 129900,
+      "status": "Available",
+      "url": "https://www.acretown.com/property/faulkner4/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/05/faulkner4-feature-1920x800.jpg"
     }
   ]
 }
