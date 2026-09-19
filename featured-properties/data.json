@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-18T14:01:01.357Z",
+  "checkedAt": "2026-09-19T14:00:38.825Z",
   "cards": [
     {
       "id": "oswego13",
@@ -13,16 +13,6 @@
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/07/oswego13-feature-1920x800.jpg"
     },
     {
-      "id": "harrisonwv",
-      "title": "Harrison County, WV",
-      "highlight": "Flat homesite · Easy access",
-      "acres": 10,
-      "price": 59900,
-      "status": "Available",
-      "url": "https://www.acretown.com/property/harrisonwv/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/08/harrisonwv-feature-1920x800.jpg"
-    },
-    {
       "id": "lakeholbrookall",
       "title": "Lake Holbrook, TX",
       "highlight": "Lake, beach & dock access",
@@ -31,6 +21,16 @@
       "status": "Available",
       "url": "https://www.acretown.com/property/lakeholbrookall/",
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/06/lakeholbrookALL-feature-1920x800.jpg"
+    },
+    {
+      "id": "harrisonwv",
+      "title": "Harrison County, WV",
+      "highlight": "Flat homesite · Easy access",
+      "acres": 10,
+      "price": 59900,
+      "status": "Available",
+      "url": "https://www.acretown.com/property/harrisonwv/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/08/harrisonwv-feature-1920x800.jpg"
     },
     {
       "id": "clevelandar3",
@@ -53,14 +53,14 @@
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/05/faulkner4-feature-1920x800.jpg"
     },
     {
-      "id": "goldenhills",
-      "title": "Golden Hills, CA",
-      "highlight": "No HOA · All Utilities",
-      "acres": 0.68,
-      "price": 54900,
+      "id": "lakeholbrook4h",
+      "title": "Lake Holbrook, TX",
+      "highlight": "No HOA · Septic-Approved",
+      "acres": 0.24,
+      "price": 19900,
       "status": "Available",
-      "url": "https://www.acretown.com/property/goldenhills/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/07/goldenhills-feature-1920x800.jpg"
+      "url": "https://www.acretown.com/property/lakeholbrook4h/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2025/10/lakeholbrook4h-feature-1920x800.jpg"
     }
   ]
 }
