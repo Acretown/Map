@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-21T14:00:39.873Z",
+  "checkedAt": "2026-09-22T14:01:37.134Z",
   "cards": [
     {
       "id": "oswego13",
@@ -11,6 +11,16 @@
       "status": "Pending",
       "url": "https://www.acretown.com/property/oswego13/",
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/07/oswego13-feature-1920x800.jpg"
+    },
+    {
+      "id": "harrisonwv",
+      "title": "Harrison County, WV",
+      "highlight": "Flat homesite · Easy access",
+      "acres": 10,
+      "price": 59900,
+      "status": "Available",
+      "url": "https://www.acretown.com/property/harrisonwv/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/08/harrisonwv-feature-1920x800.jpg"
     },
     {
       "id": "lakeholbrookall",
@@ -33,14 +43,14 @@
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/03/clevelandar3-feature-1920x800.jpg"
     },
     {
-      "id": "harrisonwv",
-      "title": "Harrison County, WV",
-      "highlight": "Flat homesite · Easy access",
-      "acres": 10,
+      "id": "butte",
+      "title": "Butte County, CA",
+      "highlight": "Cleared Homesite & Garden · Easy Access",
+      "acres": 10.06,
       "price": 59900,
       "status": "Available",
-      "url": "https://www.acretown.com/property/harrisonwv/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/08/harrisonwv-feature-1920x800.jpg"
+      "url": "https://www.acretown.com/property/butte/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/09/butte-feature-1920x800.jpg"
     },
     {
       "id": "goldenhills",
@@ -51,16 +61,6 @@
       "status": "Available",
       "url": "https://www.acretown.com/property/goldenhills/",
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/07/goldenhills-feature-1920x800.jpg"
-    },
-    {
-      "id": "faulkner4",
-      "title": "Faulkner County, AR",
-      "highlight": "No Restrictions · Partially Cleared",
-      "acres": 21.47,
-      "price": 129900,
-      "status": "Available",
-      "url": "https://www.acretown.com/property/faulkner4/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/05/faulkner4-feature-1920x800.jpg"
     }
   ]
 }
