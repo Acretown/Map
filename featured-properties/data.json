@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-22T14:01:37.134Z",
+  "checkedAt": "2026-09-23T14:00:40.853Z",
   "cards": [
     {
       "id": "oswego13",
@@ -43,14 +43,14 @@
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/03/clevelandar3-feature-1920x800.jpg"
     },
     {
-      "id": "butte",
-      "title": "Butte County, CA",
-      "highlight": "Cleared Homesite & Garden · Easy Access",
-      "acres": 10.06,
-      "price": 59900,
+      "id": "faulkner4",
+      "title": "Faulkner County, AR",
+      "highlight": "No Restrictions · Partially Cleared",
+      "acres": 21.47,
+      "price": 129900,
       "status": "Available",
-      "url": "https://www.acretown.com/property/butte/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/09/butte-feature-1920x800.jpg"
+      "url": "https://www.acretown.com/property/faulkner4/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/05/faulkner4-feature-1920x800.jpg"
     },
     {
       "id": "goldenhills",
