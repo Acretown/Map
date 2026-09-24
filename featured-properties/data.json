@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-23T14:00:40.853Z",
+  "checkedAt": "2026-09-24T14:00:41.742Z",
   "cards": [
     {
       "id": "oswego13",
@@ -11,16 +11,6 @@
       "status": "Pending",
       "url": "https://www.acretown.com/property/oswego13/",
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/07/oswego13-feature-1920x800.jpg"
-    },
-    {
-      "id": "harrisonwv",
-      "title": "Harrison County, WV",
-      "highlight": "Flat homesite · Easy access",
-      "acres": 10,
-      "price": 59900,
-      "status": "Available",
-      "url": "https://www.acretown.com/property/harrisonwv/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/08/harrisonwv-feature-1920x800.jpg"
     },
     {
       "id": "lakeholbrookall",
@@ -51,6 +41,16 @@
       "status": "Available",
       "url": "https://www.acretown.com/property/faulkner4/",
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/05/faulkner4-feature-1920x800.jpg"
+    },
+    {
+      "id": "lakeholbrook4h",
+      "title": "Lake Holbrook, TX",
+      "highlight": "No HOA · Septic-Approved",
+      "acres": 0.24,
+      "price": 19900,
+      "status": "Available",
+      "url": "https://www.acretown.com/property/lakeholbrook4h/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2025/10/lakeholbrook4h-feature-1920x800.jpg"
     },
     {
       "id": "goldenhills",
