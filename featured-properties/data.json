@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-26T14:00:44.857Z",
+  "checkedAt": "2026-09-27T14:00:38.809Z",
   "cards": [
     {
       "id": "strongsville",
@@ -13,16 +13,6 @@
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2024/08/strongsville-feature-1920x800.jpg"
     },
     {
-      "id": "lakeholbrookall",
-      "title": "Lake Holbrook, TX",
-      "highlight": "Lake, beach & dock access",
-      "acres": 3.62,
-      "price": 139900,
-      "status": "Available",
-      "url": "https://www.acretown.com/property/lakeholbrookall/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/06/lakeholbrookALL-feature-1920x800.jpg"
-    },
-    {
       "id": "clevelandar3",
       "title": "Cleveland County, AR",
       "highlight": "New road · Power & water",
@@ -31,6 +21,16 @@
       "status": "Available",
       "url": "https://www.acretown.com/property/clevelandar3/",
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/03/clevelandar3-feature-1920x800.jpg"
+    },
+    {
+      "id": "lakeholbrookall",
+      "title": "Lake Holbrook, TX",
+      "highlight": "Lake, beach & dock access",
+      "acres": 3.62,
+      "price": 139900,
+      "status": "Available",
+      "url": "https://www.acretown.com/property/lakeholbrookall/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/06/lakeholbrookALL-feature-1920x800.jpg"
     },
     {
       "id": "faulkner4",
