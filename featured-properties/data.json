@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-28T14:01:25.761Z",
+  "checkedAt": "2026-09-29T14:00:58.067Z",
   "cards": [
     {
       "id": "strongsville",
@@ -53,14 +53,14 @@
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2025/10/lakeholbrook4h-feature-1920x800.jpg"
     },
     {
-      "id": "goldenhills",
-      "title": "Golden Hills, CA",
-      "highlight": "No HOA · All Utilities",
-      "acres": 0.68,
-      "price": 54900,
+      "id": "faulkner2",
+      "title": "Faulkner County, AR",
+      "highlight": "No Restrictions · New Survey",
+      "acres": 5.06,
+      "price": 49900,
       "status": "Available",
-      "url": "https://www.acretown.com/property/goldenhills/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/07/goldenhills-feature-1920x800.jpg"
+      "url": "https://www.acretown.com/property/faulkner2/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/03/faulkner2-feature-1920x800.jpg"
     }
   ]
 }
