@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-02T14:00:21.367Z",
+  "checkedAt": "2026-10-03T14:00:23.711Z",
   "cards": [
     {
-      "id": "strongsville",
-      "title": "Strongsville, OH",
-      "highlight": "Cleared homesite · All utilities",
-      "acres": 2.2,
-      "price": 99900,
+      "id": "oswego13",
+      "title": "Oswego County, NY",
+      "highlight": "No HOA · Signature Stonewall",
+      "acres": 16.01,
+      "price": 79900,
       "status": "Pending",
-      "url": "https://www.acretown.com/property/strongsville/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2024/08/strongsville-feature-1920x800.jpg"
+      "url": "https://www.acretown.com/property/oswego13/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/07/oswego13-feature-1920x800.jpg"
     },
     {
       "id": "clevelandar3",
@@ -53,14 +53,14 @@
       "image": "https://image-cdn.carrot.com/uploads/sites/41654/2025/10/lakeholbrook4h-feature-1920x800.jpg"
     },
     {
-      "id": "faulkner2",
-      "title": "Faulkner County, AR",
-      "highlight": "No Restrictions · New Survey",
-      "acres": 5.06,
-      "price": 49900,
+      "id": "freestone",
+      "title": "Freestone County, TX",
+      "highlight": "Idyllic Pioneer Setting",
+      "acres": 12,
+      "price": 179900,
       "status": "Available",
-      "url": "https://www.acretown.com/property/faulkner2/",
-      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/03/faulkner2-feature-1920x800.jpg"
+      "url": "https://www.acretown.com/property/freestone/",
+      "image": "https://image-cdn.carrot.com/uploads/sites/41654/2026/09/freestone-feature-1920x800.jpg"
     }
   ]
 }
