@@ -230,6 +230,8 @@
 
     .reset-button:hover { background: var(--brand-soft); }
 
+    .mobile-filter-toggle { display: none; }
+
     .mobile-tabs {
       display: none;
       border: 1px solid var(--line);
@@ -711,6 +713,26 @@
       .app { padding: 12px; }
       .intro { align-items: start; flex-direction: column; gap: 8px; }
       .inventory-note { margin-bottom: 0; }
+      .intro-copy { display: none; }
+      .app[data-mobile-filters] .mobile-filter-toggle {
+        display: flex;
+        grid-column: 1 / -1;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 44px;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--brand-dark);
+        font-size: 14px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .app[data-mobile-filters="closed"] .advanced-filter { display: none; }
+      .field input, .field select { font-size: 16px; min-height: 44px; }
+      .status-toggle, .mobile-tab, .mobile-property-close, .mobile-property-link { min-height: 44px; }
+      .mobile-property-close { width: 44px; }
       .toolbar { grid-template-columns: 1fr 1fr; }
       .search-field, .status-group, .state-field { grid-column: 1 / -1; }
       .status-group { min-width: 0; }
@@ -803,22 +825,26 @@
         </label>
       </fieldset>
 
-      <label class="field state-field" for="property-state">
+      <button class="mobile-filter-toggle" id="mobile-filter-toggle" type="button" aria-expanded="false" aria-controls="state-filter min-price-filter max-price-filter acreage-filter reset-filters">
+        <span id="mobile-filter-label">Filters</span><span id="mobile-filter-symbol" aria-hidden="true">+</span>
+      </button>
+
+      <label class="field state-field advanced-filter" id="state-filter" for="property-state">
         State
         <select id="property-state"><option value="">All states</option></select>
       </label>
 
-      <label class="field" for="price-min">
+      <label class="field advanced-filter" id="min-price-filter" for="price-min">
         Minimum price
         <select id="price-min"><option value="0">No minimum</option></select>
       </label>
 
-      <label class="field" for="price-max">
+      <label class="field advanced-filter" id="max-price-filter" for="price-max">
         Maximum price
         <select id="price-max"><option value="Infinity">No maximum</option></select>
       </label>
 
-      <label class="field acreage-field" for="acreage-range">
+      <label class="field acreage-field advanced-filter" id="acreage-filter" for="acreage-range">
         Acreage
         <select id="acreage-range">
           <option value="any">Any acreage</option>
@@ -831,7 +857,7 @@
         </select>
       </label>
 
-      <button class="reset-button" id="reset-filters" type="button">Reset filters</button>
+      <button class="reset-button advanced-filter" id="reset-filters" type="button">Reset filters</button>
       <p class="location-notice" id="location-notice" role="status" aria-live="polite" hidden></p>
     </section>
 
@@ -948,6 +974,9 @@
       const maxPriceSelect = document.getElementById("price-max");
       const acreageSelect = document.getElementById("acreage-range");
       const resetButton = document.getElementById("reset-filters");
+      const mobileFilterToggle = document.getElementById("mobile-filter-toggle");
+      const mobileFilterLabel = document.getElementById("mobile-filter-label");
+      const mobileFilterSymbol = document.getElementById("mobile-filter-symbol");
       const resultsList = document.getElementById("results-list");
       const resultCount = document.getElementById("result-count");
       const sortSelect = document.getElementById("property-sort");
@@ -998,6 +1027,7 @@
       let propertyDetailsSurface = null;
       let savedMobileCamera = null;
       let viewportListTimer = 0;
+      let resultsDeferred = false;
       let mapWakeTimer = 0;
       let propertyHighlightTimer = 0;
       const CAMERA_FRAME_INTERVAL = 1000 / 60;
@@ -1769,8 +1799,14 @@
       }
 
       function renderResults(items, { inView = false } = {}) {
-        resultsList.replaceChildren();
         resultCount.textContent = `${items.length.toLocaleString()} ${items.length === 1 ? "property" : "properties"}${inView ? " in view" : ""}`;
+        // Avoid rebuilding the hidden list on every map pan on phones.
+        if (isCompactMapView() && app.dataset.mobileView !== "list") {
+          resultsDeferred = true;
+          return;
+        }
+        resultsDeferred = false;
+        resultsList.replaceChildren();
 
         if (!items.length) {
           const empty = createTextElement(
@@ -2123,6 +2159,7 @@
         listTab.setAttribute("aria-selected", String(!mapSelected));
         document.getElementById("map-panel").hidden = !mapSelected && isMobile;
         document.getElementById("results-panel").hidden = mapSelected && isMobile;
+        if (!mapSelected && resultsDeferred) renderViewportResults();
         if (mapSelected && map) {
           requestAnimationFrame(() => {
             google.maps.event.trigger(map, "resize");
@@ -2145,6 +2182,7 @@
         if (!isMobile) {
           document.getElementById("map-panel").hidden = false;
           document.getElementById("results-panel").hidden = false;
+          if (resultsDeferred) renderViewportResults();
           if (map) google.maps.event.trigger(map, "resize");
         }
         syncPropertyDetailsSurface();
@@ -2174,7 +2212,25 @@
         mapWakeTimer = window.setTimeout(redrawMapAfterTabReturn, 220);
       }
 
+      function updateMobileFilterLabel() {
+        const count = [
+          Boolean(stateSelect.value),
+          minPriceSelect.value !== "0",
+          maxPriceSelect.value !== "Infinity",
+          acreageSelect.value !== "any"
+        ].filter(Boolean).length;
+        mobileFilterLabel.textContent = count ? `Filters (${count})` : "Filters";
+      }
+
       function wireControls() {
+        app.dataset.mobileFilters = "closed";
+        mobileFilterToggle.addEventListener("click", () => {
+          const expanded = app.dataset.mobileFilters !== "open";
+          app.dataset.mobileFilters = expanded ? "open" : "closed";
+          mobileFilterToggle.setAttribute("aria-expanded", String(expanded));
+          mobileFilterSymbol.textContent = expanded ? "−" : "+";
+        });
+        updateMobileFilterLabel();
         searchInput.addEventListener("input", () => {
           window.clearTimeout(searchTimer);
           searchRequestId += 1;
@@ -2190,6 +2246,7 @@
         const refreshFilters = () => {
           window.clearTimeout(searchTimer);
           refreshInventory({ preserveLocation: Boolean(searchLocation) });
+          updateMobileFilterLabel();
         };
         document.querySelectorAll("[data-status-filter]").forEach(input => input.addEventListener("change", refreshFilters));
         stateSelect.addEventListener("change", refreshFilters);
@@ -2206,6 +2263,7 @@
           minPriceSelect.value = "0";
           maxPriceSelect.value = "Infinity";
           acreageSelect.value = "any";
+          updateMobileFilterLabel();
           sortSelect.value = "latest";
           document.querySelector('[data-status-filter][value="available"]').checked = true;
           document.querySelector('[data-status-filter][value="pending"]').checked = true;
