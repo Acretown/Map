@@ -786,7 +786,49 @@
         transition-duration: 0.01ms !important;
       }
     }
+    [data-map-unavailable="true"] .map-shell { grid-template-columns: 1fr; }
+    [data-map-unavailable="true"] .results-panel { width: 100%; max-width: none; }
+    [data-map-unavailable="true"] .property-card-main { color: inherit; text-decoration: none; }
   </style>
+<style id="acretown-map-viewport">
+/* Fit the existing controls and map to the available iframe viewport. */
+html,body {height:100%;overflow:hidden;}
+.app {display:flex;flex-direction:column;width:min(1720px,100%);height:100vh;height:100dvh;min-height:0;padding:12px;overflow:hidden;}
+.intro {flex:0 0 auto;gap:12px;margin-bottom:10px;}
+.intro h1 {font-size:26px;}
+.intro .eyebrow,.intro-copy {display:none;}
+.toolbar {flex:0 0 auto;padding:10px;gap:8px;}
+.mobile-tabs {flex:0 0 auto;}
+.map-shell {flex:1 1 0;min-height:160px;height:auto;}
+@media(min-width:1101px) and (max-width:1500px){
+ .toolbar {grid-template-columns:minmax(190px,1.5fr) auto repeat(4,minmax(92px,.65fr)) auto;}
+ .search-field,.status-group,.reset-button {grid-column:auto;grid-row:auto;}
+ .status-group {gap:5px;min-width:0;}
+ .status-toggle {padding:8px 9px;}
+ .field {font-size:10px;}
+ .reset-button {padding:9px;}
+}
+@media(max-width:820px){
+ .app {padding:8px;}
+ .intro {flex-direction:row;align-items:center;padding:4px 2px;margin-bottom:6px;}
+ .intro > div:first-child {min-width:0;}
+ .intro h1 {font-size:20px;}
+ .inventory-note {font-size:11px;gap:6px;}
+ .toolbar {grid-template-columns:minmax(0,1fr) auto;gap:7px;padding:8px;flex:0 1 auto;min-height:118px;max-height:50%;overflow:auto;overscroll-behavior:contain;}
+ .search-field {grid-column:1;grid-row:1;}
+ .status-group {grid-column:1 / -1;grid-row:2;gap:6px;}
+ .app[data-mobile-filters] .mobile-filter-toggle {grid-column:2;grid-row:1;align-self:end;gap:12px;padding:10px;}
+ .mobile-tabs {padding:6px;}
+ .map-shell {height:auto;min-height:160px;}
+ .map-panel,.results-panel {height:100%;}
+}
+@media(max-width:480px){
+ .app {padding:0;}
+ .intro {padding:8px 10px 2px;}
+ .intro h1 {font-size:19px;}
+}
+
+</style>
 </head>
 <body>
   <main class="app" id="property-app" data-mobile-view="map">
@@ -861,6 +903,7 @@
       <p class="location-notice" id="location-notice" role="status" aria-live="polite" hidden></p>
     </section>
 
+    <p class="location-notice" id="map-service-notice" role="status" aria-live="polite" hidden></p>
     <div class="mobile-tabs" role="tablist" aria-label="Property display">
       <button class="mobile-tab" id="map-tab" type="button" role="tab" aria-selected="true" aria-controls="map-panel">Map</button>
       <button class="mobile-tab" id="list-tab" type="button" role="tab" aria-selected="false" aria-controls="results-panel">List</button>
@@ -892,7 +935,7 @@
           <label class="result-sort" for="property-sort">
             <span>Sort</span>
             <select id="property-sort">
-              <option value="latest">Latest properties</option>
+              <option value="latest">Recent: newest first</option>
               <option value="price-asc">Price: low to high</option>
               <option value="price-desc">Price: high to low</option>
               <option value="acres-asc">Acreage: small to large</option>
@@ -906,7 +949,6 @@
     <footer class="map-credits"><span id="availability-notice" role="status" aria-live="polite" hidden></span><a href="credits.html" target="_blank" rel="noopener noreferrer">Map credits</a></footer>
   </main>
 
-  <script src="https://unpkg.com/@googlemaps/markerclusterer@2.6.2/dist/index.min.js"></script>
   <script>
     (() => {
       "use strict";
@@ -994,6 +1036,9 @@
       const STATUS_ENDPOINT = "https://acretown-status-cache.andymaruri.chatgpt.site/api/snapshot";
       const STATUS_FALLBACK = "https://script.google.com/macros/s/AKfycbwasrMIz0F9bteok8ULAOO5Rj6koi3raBIt14GvQeytIfQeIliA9lABfr6krWWqLlo/exec?format=json";
       const STATUS_MAX_AGE = 120000;
+      const PUBLIC_LISTING_MAX_AGE = 300000;
+      const SOURCE_TIMEOUT_MS = 12000;
+      const MAP_TIMEOUT_MS = 18000;
       const STATUS_REFRESH_MS = 60000;
       const GEOMETRY_REFRESH_MS = 300000;
       const VERIFIED_LEGACY_IDS = { wilbarger: "wilbarger1", poinsett: "poinsett2", ballard: "ballard1" };
@@ -1003,10 +1048,20 @@
         { id: "avery", lat: 36.191218, lng: -81.943333, address: "74 Woodlake Loop Rd, Elk Park, NC 28622" },
         { id: "santarosa", lat: 30.38095, lng: -86.8705, address: "1436 Tina Dr, Navarre, FL 32566" }
       ];
+      let mapReady = false;
+      let mapUnavailable = false;
+      let mapLoadTimer;
+      let inventoryLoad;
+      let clusterLibraryPromise;
+      let nextMetadataExpiry = Infinity;
+      let renderedListSignature = "";
+      let renderedMarkers = new Set();
+      const mapServiceNotice = document.getElementById("map-service-notice");
       let statusSnapshot = null;
       let statusRequest = null;
       let geometryRequest = null;
       let geometryCheckedAt = 0;
+      let hasGeometryFeed = false;
       let availabilityWasFresh = false;
       let map;
       let cityIndexPromise;
@@ -1199,59 +1254,137 @@
         return current || (property.baseStatus === "sold" ? "sold" : "unknown");
       }
 
-      function mergeVerifiedGeometry(snapshot) {
-        const previous = properties.filter(property => property.verifiedSupplement);
-        previous.forEach(property => { if (property.marker) property.marker.map = null; });
-        properties = properties.filter(property => !property.verifiedSupplement);
-        const keys = new Set(properties.map(property => propertyKey(property.link)));
-        let added = 0;
-        for (const geometry of VERIFIED_GEOMETRY) {
-          if (keys.has(geometry.id)) continue;
-          const listing = snapshot.properties.find(item => item.id.toLowerCase() === geometry.id && propertyKey(item.url) === geometry.id);
-          if (!listing || !["Available", "Locked", "Sold"].includes(listing.status)) continue;
-          const values = [listing.status === "Locked" ? "Pending" : listing.status, listing.title, listing.price, geometry.address,
-            listing.acres, geometry.lat, geometry.lng, listing.url, listing.image, listing.latestDate || ""];
-          const property = rowToProperty({ c: values.map(value => ({ v: value })) }, properties.length);
-          if (!property) continue;
-          property.verifiedSupplement = true;
-          properties.push(property);
-          keys.add(geometry.id);
-          added++;
-        }
-        return Boolean(previous.length || added);
+      function verifiedDay(value, now = Date.now()) {
+        if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return 0;
+        const day = Date.parse(value + "T00:00:00Z");
+        return Number.isFinite(day) && new Date(day).toISOString().slice(0, 10) === value
+          && day <= Math.floor(now / 86400000) * 86400000 ? day : 0;
       }
 
-      function applyCurrentAvailability({ render = true } = {}) {
+      function verifiedPublicListing(listing, now = Date.now()) {
+        const record = listing?.publicListing;
+        if (!record || record.source !== "carrot-property-page" || record.url !== listing.url
+            || !propertyKey(record.url)) return null;
+        const checked = Date.parse(record.checkedAt), expires = Date.parse(record.expiresAt);
+        if (!Number.isFinite(checked) || !Number.isFinite(expires) || checked > now
+            || expires <= now || expires <= checked || expires - checked > PUBLIC_LISTING_MAX_AGE) return null;
+        return record;
+      }
+
+      function propertySignature(property) {
+        return JSON.stringify([property.baseStatus, property.status, property.title, property.price,
+          property.priceLabel, property.address, property.acres, property.acresLabel, property.lat,
+          property.lng, property.link, property.photo, property.publishedDate, property.soldDate,
+          property.sourceTitle, property.sourcePhoto, property.sourceIndex, property.verifiedSupplement, property.listingFallback]);
+      }
+
+      function markerSignature(property) {
+        return JSON.stringify([property.status, property.title, property.lat, property.lng]);
+      }
+
+      function hasCoordinates(property) {
+        return Number.isFinite(property.lat) && Number.isFinite(property.lng);
+      }
+
+      function reconcileProperties(next) {
+        const previous = new Map(properties.map(property => [property.id, property]));
+        let changed = properties.length !== next.length;
+        properties = next.map(property => {
+          const old = previous.get(property.id);
+          if (!old) {
+            changed = true;
+            if (mapReady && hasCoordinates(property)) createMarker(property);
+            return property;
+          }
+          previous.delete(property.id);
+          const markerChanged = markerSignature(old) !== markerSignature(property);
+          if (propertySignature(old) !== propertySignature(property)) changed = true;
+          const marker = old.marker;
+          Object.assign(old, property, { marker });
+          if (markerChanged && marker) { marker.map = null; old.marker = null; }
+          if (mapReady && !old.marker && hasCoordinates(old)) createMarker(old);
+          return old;
+        });
+        previous.forEach(property => { if (property.marker) property.marker.map = null; });
+        return changed;
+      }
+
+      function projectProperties(rows, index) {
+        const listings = new Map((index ? statusSnapshot.properties : []).map(item => [propertyKey(item.url), item]));
+        const details = new Map((index ? statusSnapshot.details : []).map(item => [item.id.toLowerCase(), item]));
+        const next = rows.filter(property => !property.listingFallback || !index || listings.has(propertyKey(property.link)))
+          .map(property => ({ ...property }));
+        const keys = new Set(next.map(property => propertyKey(property.link)));
+        if (index) {
+          for (const geometry of VERIFIED_GEOMETRY) {
+            if (keys.has(geometry.id)) continue;
+            const listing = listings.get(geometry.id);
+            if (!listing || !["Available", "Locked", "Sold"].includes(listing.status)) continue;
+            const values = [listing.status === "Locked" ? "Pending" : listing.status, listing.title, "",
+              geometry.address, listing.acres, geometry.lat, geometry.lng, listing.url, listing.image, ""];
+            const property = rowToProperty({ c: values.map(value => ({ v: value })) }, next.length);
+            if (property) { property.verifiedSupplement = true; next.push(property); keys.add(geometry.id); }
+          }
+          // The current listing remains browsable even if its coordinates source is unavailable.
+          if (!hasGeometryFeed) {
+            for (const listing of statusSnapshot.properties) {
+              if (keys.has(propertyKey(listing.url))) continue;
+              const values = [listing.status === "Locked" ? "Pending" : listing.status, listing.title, "",
+                STATE_NAMES[listing.state] || "See property page for location", "", 0, 0, listing.url, listing.image, ""];
+              const property = rowToProperty({ c: values.map(value => ({ v: value })) }, next.length);
+              if (!property) continue;
+              property.listingFallback = true;
+              property.lat = null; property.lng = null; property.acres = null; property.acresLabel = "See listing";
+              property.stateCode = listing.state || ""; property.stateName = STATE_NAMES[property.stateCode] || "";
+              next.push(property);
+            }
+          }
+        }
+        nextMetadataExpiry = Infinity;
+        for (const property of next) {
+          const key = propertyKey(property.link), listing = listings.get(key), detail = details.get(key);
+          property.status = projectedMapStatus(property, index);
+          property.statusLabel = STATUS_META[property.status].label;
+          const metadata = verifiedPublicListing(listing);
+          property.title = metadata?.title || property.sourceTitle || property.title;
+          property.photo = mainPropertyPhotoUrl(metadata?.image || property.sourcePhoto || property.photo);
+          property.price = metadata?.priceStatus === "verified" && Number.isFinite(metadata.advertisedCashPrice)
+            && metadata.advertisedCashPrice > 0 ? metadata.advertisedCashPrice : null;
+          property.priceLabel = property.price === null && !listing ? "View listing for price" : formatPrice(property.price);
+          if (metadata) nextMetadataExpiry = Math.min(nextMetadataExpiry, Date.parse(metadata.expiresAt));
+          if (index) {
+            property.publishedDate = verifiedDay(metadata?.publishedDate || listing?.publishedDate)
+              ? (metadata?.publishedDate || listing.publishedDate) : "";
+            property.soldDate = detail?.status === "Sold" && verifiedDay(detail.soldDate) ? detail.soldDate : "";
+          }
+          property.searchText = normalizeSearchText([property.title, property.address, property.statusLabel,
+            property.acresLabel, property.stateCode, property.stateName].join(" "));
+        }
+        return next;
+      }
+
+      function applyCurrentAvailability({ render = true, sourceRows = null } = {}) {
         let index;
         try { index = snapshotStatusIndex(statusSnapshot); } catch (_) { index = null; }
         availabilityWasFresh = Boolean(index);
         inventoryFreshness.textContent = index ? "Live inventory" : "Checking availability";
         inventoryFreshness.dataset.verified = String(Boolean(index));
-        let changed = index ? mergeVerifiedGeometry(statusSnapshot) : false;
-        for (const property of properties) {
-          const status = projectedMapStatus(property, index);
-          if (property.status === status) {
-            if (render && !property.marker && MarkerClass) createMarker(property);
-            continue;
-          }
-          property.status = status;
-          property.statusLabel = STATUS_META[status].label;
-          property.searchText = normalizeSearchText(`${property.title} ${property.address} ${property.statusLabel} ${property.acresLabel} ${property.stateCode} ${property.stateName}`);
-          if (property.marker) { property.marker.map = null; createMarker(property); }
-          else if (render && MarkerClass) createMarker(property);
-          changed = true;
-        }
+        // Keep a verified location while offline, but never keep an expired availability/price claim.
+        const rows = sourceRows || properties.filter(property => !index || !property.verifiedSupplement);
+        const changed = reconcileProperties(projectProperties(rows, index));
         const unverified = properties.some(property => property.status === "unknown");
         availabilityNotice.hidden = !unverified;
         availabilityNotice.textContent = unverified
-          ? "Some current statuses could not be verified. Check the property listing for details."
-          : "";
+          ? "Some current statuses could not be verified. Check the property listing for details." : "";
         app.dataset.availabilityCheckedAt = index ? statusSnapshot.checkedAt : "";
-        if (render && changed && clusterer) {
+        if (render && changed) {
+          configurePriceFilters();
+          configureSearchSuggestions();
           refreshInventory({ fit: false, preserveLocation: Boolean(searchLocation) });
           const selected = properties.find(property => property.id === selectedPropertyId);
-          if (selected && visibleProperties.includes(selected)) showPropertyDetails(selected);
+          if (mapReady && selected && visibleProperties.includes(selected)) showPropertyDetails(selected);
         }
+        return changed;
       }
 
       async function fetchCurrentStatus(url, timeout) {
@@ -1277,6 +1410,7 @@
         })().catch(() => {}).finally(() => {
           statusRequest = null;
           applyCurrentAvailability();
+          if (!properties.length) renderViewportResults();
         });
         return statusRequest;
       }
@@ -1287,17 +1421,24 @@
           const rows = (await Promise.all(SHEETS.map(fetchSheetRows))).flat();
           const updated = deduplicateProperties(rows.map(rowToProperty).filter(Boolean));
           if (!updated.length) throw new Error("Map inventory is empty.");
-          clusterer.clearMarkers();
-          properties.forEach(property => { if (property.marker) property.marker.map = null; });
-          properties = updated;
-          applyCurrentAvailability({ render: false });
-          properties.forEach(createMarker);
-          configureSearchSuggestions();
+          hasGeometryFeed = true;
+          const changed = applyCurrentAvailability({ render: false, sourceRows: updated });
           geometryCheckedAt = Date.now();
-          refreshInventory({ fit: false, preserveLocation: Boolean(searchLocation) });
-          const selected = properties.find(property => property.id === selectedPropertyId);
-          if (selected && visibleProperties.includes(selected)) showPropertyDetails(selected);
-        })().catch(() => {}).finally(() => { geometryRequest = null; });
+          if (changed) {
+            configurePriceFilters();
+            configureSearchSuggestions();
+            refreshInventory({ fit: false, preserveLocation: Boolean(searchLocation) });
+            const selected = properties.find(property => property.id === selectedPropertyId);
+            if (mapReady && selected && visibleProperties.includes(selected)) showPropertyDetails(selected);
+          }
+          return true;
+        })().catch(() => {
+          if (!properties.some(hasCoordinates)) enterListFallback("Property locations are taking longer to load. You can still browse the property list.");
+          return false;
+        }).finally(() => {
+          geometryRequest = null;
+          if (!properties.length) renderViewportResults();
+        });
         return geometryRequest;
       }
 
@@ -1307,14 +1448,21 @@
         if (Date.now() - geometryCheckedAt >= GEOMETRY_REFRESH_MS) refreshMapGeometry();
       }
 
+      async function fetchWithTimeout(url, options = {}, timeout = SOURCE_TIMEOUT_MS) {
+        const controller = new AbortController();
+        const timer = window.setTimeout(() => controller.abort(), timeout);
+        try {
+          const response = await fetch(url, { ...options, signal: controller.signal });
+          if (!response.ok) throw new Error("Request failed (" + response.status + ").");
+          // Keep the timeout active while downloading the response body as well.
+          return await response.text();
+        } finally { window.clearTimeout(timer); }
+      }
+
       async function fetchSheetRows({ sheetId, gid, sheetName }) {
-        const sheetSelector = sheetName
-          ? `&sheet=${encodeURIComponent(sheetName)}`
-          : `&gid=${encodeURIComponent(gid)}`;
-        const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sheetId)}/gviz/tq?tqx=out:json${sheetSelector}`;
-        const response = await fetch(url, { cache: "no-store" });
-        if (!response.ok) throw new Error(`Inventory request failed (${response.status}).`);
-        const payload = parseGvizResponse(await response.text());
+        const selector = sheetName ? "&sheet=" + encodeURIComponent(sheetName) : "&gid=" + encodeURIComponent(gid);
+        const url = "https://docs.google.com/spreadsheets/d/" + encodeURIComponent(sheetId) + "/gviz/tq?tqx=out:json" + selector;
+        const payload = parseGvizResponse(await fetchWithTimeout(url, { cache: "no-store" }));
         if (payload.status && payload.status !== "ok") throw new Error("The inventory source returned an error.");
         return payload.table?.rows ?? [];
       }
@@ -1352,6 +1500,12 @@
           status,
           statusLabel: STATUS_META[status].label,
           title: title || address || "Property",
+          sourceTitle: title || address || "Property",
+          sourcePhoto: mainPropertyPhotoUrl(cellValue(row, 8)),
+          publishedDate: "",
+          soldDate: "",
+          listingFallback: false,
+          verifiedSupplement: false,
           price: numericPrice,
           priceLabel: formatPrice(numericPrice),
           address: address || "Address unavailable",
@@ -1402,32 +1556,39 @@
         return badge;
       }
 
+      function thumbnailUrl(value, width) {
+        try {
+          const url = new URL(value);
+          if (url.hostname !== "image-cdn.carrot.com" || !url.pathname.startsWith("/uploads/")) return value;
+          // This is the same image service and transformation format used by Carrot's own srcsets.
+          const request = { bucket: "production.carrot-uploads.oncarrot.com", key: url.pathname.slice(1),
+            edits: { resize: { width, fit: "cover" }, toFormat: "webp", webp: { quality: 80 } } };
+          return url.origin + "/" + btoa(JSON.stringify(request));
+        } catch (_) { return value; }
+      }
+
       function makePropertyImage(property, className) {
         const wrapper = document.createElement("div");
         wrapper.className = className;
         const fallback = createTextElement("span", "property-thumb-fallback", "AcreTown");
         wrapper.appendChild(fallback);
         const image = document.createElement("img");
-        let isFallbackImage = !property.photo;
-
-        const useFallbackImage = () => {
-          if (isFallbackImage) {
-            image.remove();
-            return;
-          }
-          isFallbackImage = true;
-          image.classList.add("is-fallback");
-          image.alt = "AcreTown logo";
-          image.src = ACRETOWN_LOGO_URL;
-        };
-
-        image.src = isFallbackImage ? ACRETOWN_LOGO_URL : property.photo;
-        image.alt = isFallbackImage ? "AcreTown logo" : `Featured view of ${property.title}`;
+        const original = property.photo || ACRETOWN_LOGO_URL;
+        const thumbnail = property.photo ? thumbnailUrl(original, className === "property-thumb" ? 384 : 720) : original;
+        let triedOriginal = thumbnail === original, triedLogo = !property.photo;
+        image.src = thumbnail;
+        image.alt = property.photo ? "Featured view of " + property.title : "AcreTown logo";
         image.loading = "lazy";
         image.decoding = "async";
-        if (isFallbackImage) image.classList.add("is-fallback");
+        if (!property.photo) image.classList.add("is-fallback");
         image.addEventListener("load", () => fallback.remove(), { once: true });
-        image.addEventListener("error", useFallbackImage);
+        image.addEventListener("error", () => {
+          if (!triedOriginal) { triedOriginal = true; image.src = original; return; }
+          if (!triedLogo) {
+            triedLogo = true; image.classList.add("is-fallback"); image.alt = "AcreTown logo"; image.src = ACRETOWN_LOGO_URL; return;
+          }
+          image.remove();
+        });
         wrapper.appendChild(image);
         return wrapper;
       }
@@ -1524,11 +1685,12 @@
         } else {
           clusterAnimationId += 1;
           releaseTravelingClusterMarkers();
-          if (pan && isCompactMapView()) map.panTo({ lat: property.lat, lng: property.lng });
+          if (map && pan && isCompactMapView()) map.panTo({ lat: property.lat, lng: property.lng });
         }
       }
 
       function createMarker(property) {
+        if (!map || !MarkerClass || !PinClass || !hasCoordinates(property)) return;
         const meta = STATUS_META[property.status];
         const pin = new PinClass({
           background: meta.color,
@@ -1558,6 +1720,7 @@
         const finitePrices = properties.map(property => property.price).filter(Number.isFinite);
         const highestPrice = finitePrices.length ? Math.max(...finitePrices) : 0;
         PRICE_STEPS.filter(value => value <= highestPrice).forEach(value => {
+          if ([...minPriceSelect.options].some(option => Number(option.value) === value)) return;
           appendSelectOption(minPriceSelect, value, formatPrice(value));
           appendSelectOption(maxPriceSelect, value, formatPrice(value));
         });
@@ -1655,7 +1818,7 @@
       }
 
       function nearestProperties(origin, items) {
-        const ranked = items.map(property => ({ property, miles: distanceMiles(origin, property) }))
+        const ranked = items.filter(hasCoordinates).map(property => ({ property, miles: distanceMiles(origin, property) }))
           .sort((a, b) => a.miles - b.miles || a.property.sourceIndex - b.property.sourceIndex);
         if (!ranked.length) return [];
         const radius = Math.max(ranked[0].miles * 1.5, ranked[0].miles + 25);
@@ -1726,16 +1889,12 @@
 
       function loadCityIndex() {
         if (!cityIndexPromise) {
-          cityIndexPromise = fetch(new URL("us-cities.json?v=20260912", window.location.href), { cache: "force-cache" })
-            .then(response => {
-              if (!response.ok) throw new Error("CITY_INDEX_UNAVAILABLE");
-              return response.json();
-            })
-            .then(data => {
+          cityIndexPromise = fetchWithTimeout(new URL("us-cities.json?v=20260912", window.location.href), { cache: "force-cache" })
+            .then(text => {
+              const data = JSON.parse(text);
               if (!Array.isArray(data.cities) || !data.cities.length) throw new Error("CITY_INDEX_UNAVAILABLE");
               return data.cities;
-            })
-            .catch(error => { cityIndexPromise = null; throw error; });
+            }).catch(error => { cityIndexPromise = null; throw error; });
         }
         return cityIndexPromise;
       }
@@ -1755,8 +1914,10 @@
           }
           if (requestId !== searchRequestId || normalizeSearchText(searchInput.value) !== key) return;
           searchLocation = location;
+          if (mapReady) {
           const pin = new PinClass({ background: "#2168b0", borderColor: "#134477", glyphColor: "#ffffff", glyphText: "●", scale: 1.1 });
           searchLocationMarker = new MarkerClass({ map, position: { lat: location.lat, lng: location.lng }, title: `Search location: ${location.label}`, content: pin, zIndex: 1000 });
+          }
           refreshInventory({ preserveLocation: true });
         } catch (error) {
           if (requestId !== searchRequestId) return;
@@ -1771,15 +1932,11 @@
       function sortProperties(items) {
         const mode = sortSelect.value;
         if (mode === "latest") {
-          return [...items].sort((a, b) => {
-            const aHasDate = Number.isFinite(a.latestTimestamp);
-            const bHasDate = Number.isFinite(b.latestTimestamp);
-            if (aHasDate !== bHasDate) return aHasDate ? -1 : 1;
-            if (aHasDate && bHasDate && a.latestTimestamp !== b.latestTimestamp) {
-              return b.latestTimestamp - a.latestTimestamp;
-            }
-            return a.sourceIndex - b.sourceIndex;
-          });
+          const now = Date.now();
+          const day = property => verifiedDay(property.status === "sold" ? property.soldDate : property.publishedDate, now);
+          return [...items].sort((a, b) => day(b) - day(a)
+            || (a.status === "sold" ? -1 : 0) - (b.status === "sold" ? -1 : 0)
+            || a.id.localeCompare(b.id));
         }
 
         const field = mode.startsWith("acres") ? "acres" : "price";
@@ -1801,14 +1958,34 @@
       function renderResults(items, { inView = false } = {}) {
         resultCount.textContent = `${items.length.toLocaleString()} ${items.length === 1 ? "property" : "properties"}${inView ? " in view" : ""}`;
         // Avoid rebuilding the hidden list on every map pan on phones.
-        if (isCompactMapView() && app.dataset.mobileView !== "list") {
+        if (!mapUnavailable && isCompactMapView() && app.dataset.mobileView !== "list") {
           resultsDeferred = true;
           return;
         }
         resultsDeferred = false;
+        const ordered = sortProperties(items);
+        const signature = JSON.stringify([mapReady, sortSelect.value, selectedPropertyId,
+          !properties.length && Boolean(geometryRequest || statusRequest), ordered.map(propertySignature)]);
+        if (signature === renderedListSignature) return;
+        renderedListSignature = signature;
+        const previousCards = new Map([...resultsList.children].filter(card => card.dataset.propertyId)
+          .map(card => [card.dataset.propertyId, card]));
         resultsList.replaceChildren();
 
         if (!items.length) {
+          if (!properties.length) {
+            const loading = Boolean(geometryRequest || statusRequest);
+            const empty = createTextElement("div", "empty-results", loading
+              ? "Loading properties…" : "The property list is temporarily unavailable. ");
+            if (!loading) {
+              const link = createTextElement("a", "", "Browse all properties →");
+              link.href = "https://www.acretown.com/property/";
+              link.target = "_blank"; link.rel = "noopener noreferrer";
+              empty.appendChild(link);
+            }
+            resultsList.appendChild(empty);
+            return;
+          }
           const empty = createTextElement(
             "div",
             "empty-results",
@@ -1821,18 +1998,26 @@
         }
 
         const fragment = document.createDocumentFragment();
-        sortProperties(items).forEach(property => {
+        ordered.forEach(property => {
+          const cardSignature = JSON.stringify([propertySignature(property), mapReady, property.id === selectedPropertyId]);
+          const previous = previousCards.get(property.id);
+          if (previous?.dataset.renderSignature === cardSignature) {
+            fragment.appendChild(previous);
+            return;
+          }
           const card = document.createElement("article");
           card.className = "property-card";
           card.dataset.propertyId = property.id;
+          card.dataset.renderSignature = cardSignature;
           if (property.id === selectedPropertyId) card.classList.add("is-active");
 
-          const main = document.createElement("button");
+          const main = document.createElement(mapReady ? "button" : "a");
           main.className = "property-card-main";
-          main.type = "button";
-          main.setAttribute("aria-label", `Show ${property.title} on the map`);
+          if (mapReady) main.type = "button";
+          else { main.href = property.link; main.target = "_blank"; main.rel = "noopener noreferrer"; }
+          main.setAttribute("aria-label", mapReady ? `Show ${property.title} on the map` : `View ${property.title}`);
           main.setAttribute("aria-pressed", String(property.id === selectedPropertyId));
-          main.addEventListener("click", () => {
+          if (mapReady) main.addEventListener("click", () => {
             selectedPropertyId = property.id;
             setMobileView("map");
             requestAnimationFrame(() => openProperty(property, { focusMap: true, scrollCard: false }));
@@ -1868,7 +2053,11 @@
       }
 
       function renderViewportResults() {
-        if (!map || !visibleProperties.length) {
+        if (!mapReady && searchLocation) {
+          renderResults(nearestProperties(searchLocation, visibleProperties).map(item => item.property));
+          return;
+        }
+        if (!mapReady || !visibleProperties.length) {
           renderResults(visibleProperties);
           return;
         }
@@ -1966,7 +2155,7 @@
           longitudeDistance * Math.cos(averageLatitude)
         );
         const zoomDistance = Math.abs(targetZoom - currentZoom);
-        const duration = Math.min(1250, 580 + zoomDistance * 55 + Math.min(280, geographicDistance * 3));
+        const duration = Math.min(isCompactMapView() ? 520 : 650, 260 + zoomDistance * 25 + Math.min(100, geographicDistance * 1.5));
         const smootherStep = progress => progress * progress * progress
           * (progress * (progress * 6 - 15) + 10);
         let startTime;
@@ -2040,10 +2229,10 @@
         const isLargeJump = zoomDistance >= 5;
         const shouldLeadTravel = geographicDistance >= 6;
         const cameraDuration = isLargeJump
-          ? Math.min(1900, 850 + zoomDistance * 100)
+          ? Math.min(isCompactMapView() ? 600 : 750, 320 + zoomDistance * 35)
           : Math.min(
-              shouldLeadTravel ? 850 : 700,
-              (shouldLeadTravel ? 500 : 420) + zoomDistance * 60 + geographicDistance * 3
+              shouldLeadTravel ? 550 : 450,
+              (shouldLeadTravel ? 260 : 220) + zoomDistance * 25 + geographicDistance * 1.5
             );
         let cameraStartTime;
         let lastCameraFrame = -Infinity;
@@ -2078,10 +2267,16 @@
         window.requestAnimationFrame(animateCamera);
       }
 
+      function overviewPadding(height) {
+        return height > 0 && height < 420
+          ? { top: 44, right: 28, bottom: 28, left: 28 }
+          : { top: 62, right: 62, bottom: 62, left: 62 };
+      }
+
       function fitVisibleProperties() {
         if (!map || !visibleProperties.length || app.dataset.mobileView === "list") return;
-        lastVisibleBounds = buildBounds(visibleProperties);
-        map.fitBounds(lastVisibleBounds, { top: 62, right: 62, bottom: 62, left: 62 });
+        lastVisibleBounds = buildBounds(visibleProperties.filter(hasCoordinates));
+        map.fitBounds(lastVisibleBounds, overviewPadding(map.getDiv?.()?.clientHeight));
         google.maps.event.addListenerOnce(map, "idle", () => {
           if (map.getZoom() > 11) map.setZoom(11);
         });
@@ -2100,7 +2295,6 @@
       }
 
       function refreshInventory({ fit = true, preserveLocation = false } = {}) {
-        if (!clusterer) return;
         clusterAnimationId += 1;
         releaseTravelingClusterMarkers({ render: false });
         const min = Number(minPriceSelect.value);
@@ -2114,14 +2308,26 @@
         const requestId = ++searchRequestId;
         if (!preserveLocation) clearSearchLocation();
         visibleProperties = filteredInventory({ ignoreSearch: Boolean(searchLocation) });
-        clusterer.clearMarkers();
-        clusterer.addMarkers(visibleProperties.map(property => property.marker));
+        if (clusterer) {
+          const next = new Set(visibleProperties.map(property => property.marker).filter(Boolean));
+          const removed = [...renderedMarkers].filter(marker => !next.has(marker));
+          const added = [...next].filter(marker => !renderedMarkers.has(marker));
+          if (removed.length) clusterer.removeMarkers(removed, true);
+          if (added.length) clusterer.addMarkers(added, true);
+          if (removed.length || added.length) clusterer.render();
+          renderedMarkers = next;
+        }
         renderResults(visibleProperties);
 
         if (selectedPropertyId && !visibleProperties.some(property => property.id === selectedPropertyId)) {
           closePropertyDetails();
         }
 
+        if (!mapReady) {
+          if (searchLocation) { updateSearchLocationNotice(); renderViewportResults(); }
+          else if (!visibleProperties.length && query.length >= 3) searchNearby(query, requestId);
+          return;
+        }
         if (searchLocation) {
           hideState();
           if (fit) fitSearchLocation();
@@ -2141,6 +2347,7 @@
       }
 
       function setMobileView(view) {
+        if (mapUnavailable) view = "list";
         const isMobile = window.matchMedia("(max-width: 820px)").matches;
         if (isMobile && view === "list" && map) {
           const center = map.getCenter();
@@ -2157,8 +2364,8 @@
         const mapSelected = view === "map";
         mapTab.setAttribute("aria-selected", String(mapSelected));
         listTab.setAttribute("aria-selected", String(!mapSelected));
-        document.getElementById("map-panel").hidden = !mapSelected && isMobile;
-        document.getElementById("results-panel").hidden = mapSelected && isMobile;
+        document.getElementById("map-panel").hidden = mapUnavailable || (!mapSelected && isMobile);
+        document.getElementById("results-panel").hidden = !mapUnavailable && mapSelected && isMobile;
         if (!mapSelected && resultsDeferred) renderViewportResults();
         if (mapSelected && map) {
           requestAnimationFrame(() => {
@@ -2176,6 +2383,12 @@
       }
 
       function syncResponsivePanels() {
+        if (mapUnavailable) {
+          document.getElementById("map-panel").hidden = true;
+          document.getElementById("results-panel").hidden = false;
+          if (resultsDeferred) renderViewportResults();
+          return;
+        }
         const isMobile = window.matchMedia("(max-width: 820px)").matches;
         document.getElementById("map-panel").hidden = isMobile && app.dataset.mobileView !== "map";
         document.getElementById("results-panel").hidden = isMobile && app.dataset.mobileView !== "list";
@@ -2282,100 +2495,86 @@
         window.addEventListener("focus", wakeMapAfterTabReturn, { passive: true });
       }
 
+      function enterListFallback(message) {
+        mapUnavailable = true;
+        mapReady = false;
+        app.dataset.mapUnavailable = "true";
+        mapServiceNotice.textContent = message || "The map is temporarily unavailable. Browse the property list below.";
+        mapServiceNotice.hidden = false;
+        mapTab.disabled = true;
+        setMobileView("list");
+        renderViewportResults();
+      }
+
+      function loadClusterLibrary() {
+        return new Promise((resolve, reject) => {
+          if (window.markerClusterer?.MarkerClusterer) { resolve(true); return; }
+          const script = document.createElement("script");
+          const timer = window.setTimeout(() => { script.remove(); reject(new Error("Map library timed out.")); }, SOURCE_TIMEOUT_MS);
+          script.src = "https://unpkg.com/@googlemaps/markerclusterer@2.6.2/dist/index.min.js";
+          script.async = true;
+          script.onload = () => { window.clearTimeout(timer); resolve(Boolean(window.markerClusterer?.MarkerClusterer)); };
+          script.onerror = () => { window.clearTimeout(timer); reject(new Error("Map library unavailable.")); };
+          document.head.appendChild(script);
+        });
+      }
+
       window.initMap = async function initMap() {
         try {
-          if (window.location.protocol === "file:") {
-            resultCount.textContent = "Preview required";
-            resultsList.replaceChildren(createTextElement("div", "empty-results", "Use the preview launcher included with this map."));
-            showState(
-              "error",
-              "Use the preview launcher",
-              "Google Maps cannot load when this HTML file is opened directly. Double-click Preview Property Map.command and use the browser window it opens."
-            );
-            return;
-          }
-
-          if (!window.markerClusterer?.MarkerClusterer) {
-            throw new Error("The marker clustering library did not load.");
-          }
-
+          if (!await clusterLibraryPromise) throw new Error("Map library unavailable.");
           map = new google.maps.Map(document.getElementById("map"), {
-            center: { lat: 38.5, lng: -98.5 },
-            zoom: 4,
-            minZoom: 2,
-            mapId: MAP_ID,
-            renderingType: google.maps.RenderingType.VECTOR,
-            isFractionalZoomEnabled: true,
-            backgroundColor: "#edf5f0",
-            streetViewControl: false,
-            mapTypeControl: true,
-            mapTypeControlOptions: {
-              style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
-              position: google.maps.ControlPosition.TOP_LEFT
-            },
-            fullscreenControl: true,
-            clickableIcons: false
+            center: { lat: 38.5, lng: -98.5 }, zoom: 4, minZoom: 2, mapId: MAP_ID,
+            renderingType: google.maps.RenderingType.VECTOR, isFractionalZoomEnabled: true,
+            backgroundColor: "#edf5f0", streetViewControl: false, mapTypeControl: true,
+            mapTypeControlOptions: { style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR, position: google.maps.ControlPosition.TOP_LEFT },
+            fullscreenControl: true, clickableIcons: false
           });
           google.maps.event.addListenerOnce(map, "tilesloaded", () => {
             app.dataset.mapRenderingType = String(map.getRenderingType() ?? "unknown").toLowerCase();
           });
-
           const markerLibrary = await google.maps.importLibrary("marker");
           MarkerClass = markerLibrary.AdvancedMarkerElement;
           PinClass = markerLibrary.PinElement;
-
-          const sheetResults = await Promise.allSettled(SHEETS.map(fetchSheetRows));
-          const fulfilledRows = sheetResults
-            .filter(result => result.status === "fulfilled")
-            .flatMap(result => result.value);
-          if (!fulfilledRows.length) {
-            const reason = sheetResults.find(result => result.status === "rejected")?.reason;
-            throw reason instanceof Error ? reason : new Error("No inventory source could be loaded.");
-          }
-
-          properties = deduplicateProperties(fulfilledRows.map(rowToProperty).filter(Boolean));
-          if (!properties.length) throw new Error("No properties with valid statuses and coordinates were found.");
-
-          geometryCheckedAt = Date.now();
-          applyCurrentAvailability({ render: false });
+          const geometryLoaded = await inventoryLoad;
+          if (!geometryLoaded || !properties.some(hasCoordinates)) throw new Error("Property locations unavailable.");
           properties.forEach(createMarker);
-          configurePriceFilters();
-          configureStateFilter();
-          configureSearchSuggestions();
-          clusterer = new window.markerClusterer.MarkerClusterer({
-            map,
-            markers: [],
-            onClusterClick: zoomIntoCluster
-          });
+          clusterer = new window.markerClusterer.MarkerClusterer({ map, markers: [], onClusterClick: zoomIntoCluster });
+          renderedMarkers = new Set();
           map.addListener("idle", scheduleViewportResults);
-          wireControls();
+          mapReady = true; mapUnavailable = false; app.dataset.mapUnavailable = "false";
+          mapServiceNotice.hidden = true; mapTab.disabled = false;
+          window.clearTimeout(mapLoadTimer);
           syncResponsivePanels();
           refreshInventory();
-          refreshAuthoritativeStatus();
-          window.setInterval(refreshMapSources, STATUS_REFRESH_MS);
-          window.setInterval(() => { if (availabilityWasFresh && !snapshotIsFresh(statusSnapshot)) applyCurrentAvailability(); }, 1000);
-          document.addEventListener("visibilitychange", refreshMapSources);
-          window.addEventListener("pageshow", refreshMapSources);
         } catch (error) {
           console.error("Property map initialization failed:", error);
-          resultCount.textContent = "Unavailable";
-          resultsList.replaceChildren(createTextElement("div", "empty-results", "The live inventory could not be loaded."));
-          showState("error", "We couldn’t load the map", "Please check your connection and try again.");
+          enterListFallback();
         }
       };
 
-      window.handleMapLoadError = function handleMapLoadError() {
-        resultCount.textContent = "Unavailable";
-        if (window.location.protocol === "file:") {
-          showState(
-            "error",
-            "Use the preview launcher",
-            "Google Maps cannot load when this HTML file is opened directly. Double-click Preview Property Map.command and use the browser window it opens."
-          );
-          return;
-        }
-        showState("error", "We couldn’t load the map", "The map service did not respond. Please try again.");
-      };
+      window.handleMapLoadError = () => enterListFallback();
+      window.gm_authFailure = () => enterListFallback();
+
+      function startApplication() {
+        configureStateFilter();
+        configurePriceFilters();
+        wireControls();
+        syncResponsivePanels();
+        // Data and controls do not depend on either Google Maps library.
+        inventoryLoad = refreshMapGeometry();
+        refreshAuthoritativeStatus();
+        clusterLibraryPromise = loadClusterLibrary().catch(() => { enterListFallback(); return false; });
+        mapLoadTimer = window.setTimeout(() => {
+          if (!mapReady) enterListFallback("The map is taking longer to load. Browse the property list while we connect.");
+        }, MAP_TIMEOUT_MS);
+        window.setInterval(refreshMapSources, STATUS_REFRESH_MS);
+        window.setInterval(() => {
+          if ((availabilityWasFresh && !snapshotIsFresh(statusSnapshot)) || Date.now() >= nextMetadataExpiry) applyCurrentAvailability();
+        }, 1000);
+        document.addEventListener("visibilitychange", refreshMapSources);
+        window.addEventListener("pageshow", refreshMapSources);
+      }
+      startApplication();
     })();
   </script>
 
